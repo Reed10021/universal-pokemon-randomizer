@@ -63,4 +63,44 @@ public enum EvolutionType {
                 || (this == LEVEL_CREATE_EXTRA) || (this == LEVEL_IS_EXTRA) || (this == LEVEL_MALE_ONLY)
                 || (this == LEVEL_FEMALE_ONLY);
     }
+
+    public boolean isItem() {
+        return (this == TRADE_ITEM) || (this == STONE) || (this == STONE_MALE_ONLY) || (this == STONE_FEMALE_ONLY)
+                || (this == LEVEL_ITEM_DAY) || (this == LEVEL_ITEM_NIGHT);
+    }
+
+    @Override
+    public String toString() {
+        switch(this) {
+            case LEVEL:
+            case LEVEL_CREATE_EXTRA: return "Levelup at Lv "; //Creates extra Pokemon during levelup at Lv
+            case STONE: return "Stone - ";
+            case TRADE: return "By trading";
+            case TRADE_ITEM: return "Trading while holding ";
+            case HAPPINESS: return "Levelup with high friendship";
+            case HAPPINESS_DAY: return "Levelup with high friendship during the day";
+            case HAPPINESS_NIGHT: return "Levelup with high friendship during the night";
+            case LEVEL_ATTACK_HIGHER: return "Attack is higher at Lv ";
+            case LEVEL_DEFENSE_HIGHER: return "Defense is higher at Lv ";
+            case LEVEL_ATK_DEF_SAME: return "Attack and Defense are the same at Lv ";
+            case LEVEL_LOW_PV: return "Low personality value levelup at Lv ";
+            case LEVEL_HIGH_PV: return "High personality value levelup at Lv ";
+            case LEVEL_IS_EXTRA: return "Created at Lv ";
+            case LEVEL_HIGH_BEAUTY: return "Levelup with high beauty";
+            case STONE_MALE_ONLY: return "Stone, Male Only - ";
+            case STONE_FEMALE_ONLY: return "Stone, Female only - ";
+            case LEVEL_ITEM_DAY: return "During the day, levelup holding ";
+            case LEVEL_ITEM_NIGHT: return "During the night, levelup holding ";
+            case LEVEL_WITH_MOVE: return "Levelup knowing the move ";
+            case LEVEL_WITH_OTHER: return "Levelup with other pokemon in party - ";
+            case LEVEL_MALE_ONLY: return "Male levelup at Lv ";
+            case LEVEL_FEMALE_ONLY: return "Female levelup at Lv ";
+            case LEVEL_ELECTRIFIED_AREA: return "Levelup at an electrified area";
+            case LEVEL_MOSS_ROCK: return "Levelup at a mossy rock";
+            case LEVEL_ICY_ROCK: return "Levelup at an icy rock";
+            case TRADE_SPECIAL: return "By trading with the pokemon ";
+            case NONE: return "";
+            default: return "ERROR";
+        }
+    }
 }

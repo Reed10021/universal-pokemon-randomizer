@@ -24,8 +24,8 @@ package com.dabomstew.pkrandom;
 /*--  along with this program. If not, see <http://www.gnu.org/licenses/>.  --*/
 /*----------------------------------------------------------------------------*/
 
-import java.io.OutputStream;
-import java.io.PrintStream;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,18 +33,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.dabomstew.pkrandom.pokemon.Encounter;
-import com.dabomstew.pkrandom.pokemon.EncounterSet;
-import com.dabomstew.pkrandom.pokemon.IngameTrade;
-import com.dabomstew.pkrandom.pokemon.Move;
-import com.dabomstew.pkrandom.pokemon.MoveLearnt;
-import com.dabomstew.pkrandom.pokemon.Pokemon;
-import com.dabomstew.pkrandom.pokemon.Trainer;
-import com.dabomstew.pkrandom.pokemon.TrainerPokemon;
+import com.dabomstew.pkrandom.pokemon.*;
 import com.dabomstew.pkrandom.romhandlers.Gen1RomHandler;
 import com.dabomstew.pkrandom.romhandlers.Gen4RomHandler;
 import com.dabomstew.pkrandom.romhandlers.Gen5RomHandler;
 import com.dabomstew.pkrandom.romhandlers.RomHandler;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 // Can randomize a file based on settings. Output varies by seed.
 public class Randomizer {
@@ -73,6 +70,18 @@ public class Randomizer {
     }
 
     public int randomize(final String filename, final PrintStream log, long seed) {
+        Workbook wb = new XSSFWorkbook();
+        wb.createSheet("Stats, Type, Ability, Item");
+        wb.createSheet("Evolutions");
+        wb.createSheet("Starters, Static, Trades");
+        wb.createSheet("Moves, TMs, Move Tutors");
+        wb.createSheet("Poke Movesets");
+        wb.createSheet("Poke TMHM Compat");
+        wb.createSheet("Poke Move Tutor Compat");
+        wb.createSheet("Wild Pokemon");
+        wb.createSheet("Trainers");
+        wb.createSheet("Randomized Items");
+
         final long startTime = System.currentTimeMillis();
         RandomSource.seed(seed);
         final boolean raceMode = settings.isRaceMode();
@@ -188,7 +197,7 @@ public class Randomizer {
             romHandler.randomizeWildHeldItems(settings.isBanBadRandomWildPokemonHeldItems(), settings.getForceHeldItemMode() );
         }
 
-        maybeLogBaseStatAndTypeChanges(log, romHandler);
+        maybeLogBaseStatAndTypeChanges(wb, log, romHandler);
         for (Pokemon pkmn : romHandler.getPokemon()) {
             if (pkmn != null) {
                 checkValue = addToCV(checkValue, pkmn.hp, pkmn.attack, pkmn.defense, pkmn.speed, pkmn.spatk,
@@ -202,36 +211,27 @@ public class Randomizer {
             romHandler.randomizeEvolutions(settings.isEvosSimilarStrength(), settings.isEvosSameTyping(),
                     settings.isEvosMaxThreeStages(), settings.isEvosForceChange());
 
-            log.println("--Randomized Evolutions--");
-            List<Pokemon> allPokes = romHandler.getPokemon();
-            for (Pokemon pk : allPokes) {
-                if (pk != null) {
-                    int numEvos = pk.evolutionsFrom.size();
-                    if (numEvos > 0) {
-                        StringBuilder evoStr = new StringBuilder(pk.evolutionsFrom.get(0).to.name);
-                        for (int i = 1; i < numEvos; i++) {
-                            if (i == numEvos - 1) {
-                                evoStr.append(" and " + pk.evolutionsFrom.get(i).to.name);
-                            } else {
-                                evoStr.append(", " + pk.evolutionsFrom.get(i).to.name);
-                            }
-                        }
-                        log.println(pk.name + " now evolves into " + evoStr.toString());
-                    }
-                }
+            // Only output evolutions to workbook once. So if we're not done making changes, don't log it.
+            if(settings.isChangeImpossibleEvolutions() || settings.isMakeEvolutionsEasier()) {
+                logRandomizedEvolutions(null, log, romHandler);
+            } else {
+                logRandomizedEvolutions(wb, log, romHandler);
             }
-
-            log.println();
         }
 
         // Trade evolutions removal
         if (settings.isChangeImpossibleEvolutions()) {
             romHandler.removeTradeEvolutions(!(settings.getMovesetsMod() == Settings.MovesetsMod.UNCHANGED));
+            // Again, if we're not done making changes to evolutions yet, keep going and don't log it to the workbook
+            if(!settings.isMakeEvolutionsEasier()) {
+                logToWorkbookRandomizedEvolutions(wb, romHandler);
+            }
         }
 
         // Easier evolutions
         if (settings.isMakeEvolutionsEasier()) {
             romHandler.condenseLevelEvolutions(40, 30);
+            logToWorkbookRandomizedEvolutions(wb, romHandler);
         }
 
         // Starter Pokemon
@@ -682,10 +682,18 @@ public class Randomizer {
         log.println("Config string: " + Settings.VERSION + "" + settings.toString());
         log.println("------------------------------------------------------------------");
 
+        try(OutputStream fileOut = new FileOutputStream(filename+".xlsx")) {
+            wb.write(fileOut);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return checkValue;
     }
 
-    private void maybeLogBaseStatAndTypeChanges(final PrintStream log, final RomHandler romHandler) {
+    private void maybeLogBaseStatAndTypeChanges(final Workbook wb, final PrintStream log, final RomHandler romHandler) {
         List<Pokemon> allPokes = romHandler.getPokemon();
         String[] itemNames = romHandler.getItemNames();
         // Log base stats & types if changed at all
@@ -707,7 +715,6 @@ public class Randomizer {
                         log.printf("%3d|%-10s|%-17s|%4d|%4d|%4d|%4d|%4d" + NEWLINE, pkmn.number, pkmn.name, typeString,
                                 pkmn.hp, pkmn.attack, pkmn.defense, pkmn.speed, pkmn.special);
                     }
-
                 }
             } else {
                 log.print("NUM|NAME      |TYPE             |  HP| ATK| DEF| SPE|SATK|SDEF");
@@ -758,10 +765,262 @@ public class Randomizer {
                         }
                         log.println();
                     }
-
                 }
             }
             log.println();
+            logToWorkbookBaseStatAndTypeChanges(wb, romHandler);
+        }
+    }
+
+    private void logToWorkbookBaseStatAndTypeChanges(Workbook wb, RomHandler romHandler) {
+        List<Pokemon> allPokes = romHandler.getPokemon();
+        String[] itemNames = romHandler.getItemNames();
+        int rowCounter = 0;
+        int cellCounter = 0;
+        Sheet poke = wb.getSheetAt(0);
+        poke.createFreezePane(0,1);
+        Row rowOne = poke.createRow(rowCounter++);
+        // Handle Gen 1 since it's special.
+        if (romHandler instanceof Gen1RomHandler) {
+            rowOne.createCell(cellCounter++).setCellValue("NUM");
+            rowOne.createCell(cellCounter++).setCellValue("NAME");
+            rowOne.createCell(cellCounter++).setCellValue("TYPE");
+            rowOne.createCell(cellCounter++).setCellValue("HP");
+            rowOne.createCell(cellCounter++).setCellValue("ATK");
+            rowOne.createCell(cellCounter++).setCellValue("DEF");
+            rowOne.createCell(cellCounter++).setCellValue("SPD");
+            rowOne.createCell(cellCounter++).setCellValue("SPEC");
+            rowOne.createCell(cellCounter++).setCellValue("BST");
+            CellStyle centerCells = wb.createCellStyle();
+            centerCells.setAlignment(HorizontalAlignment.CENTER);
+            for(int i = 0; i < cellCounter; i++) {
+                rowOne.getCell(i).setCellStyle(centerCells);
+            }
+
+            for(Pokemon pkmn : allPokes) {
+                if(pkmn != null) {
+                    String typeString = pkmn.primaryType == null ? "???" : pkmn.primaryType.toString();
+                    if (pkmn.secondaryType != null) {
+                        typeString += "/" + pkmn.secondaryType.toString();
+                    }
+                    Row temp = poke.createRow(rowCounter++);
+                    temp.createCell(0).setCellValue(pkmn.number);
+                    temp.createCell(1).setCellValue(pkmn.name);
+                    temp.createCell(2).setCellValue(typeString);
+                    temp.createCell(3).setCellValue(pkmn.hp);
+                    temp.createCell(4).setCellValue(pkmn.attack);
+                    temp.createCell(5).setCellValue(pkmn.defense);
+                    temp.createCell(6).setCellValue(pkmn.speed);
+                    temp.createCell(7).setCellValue(pkmn.special);
+                    temp.createCell(8).setCellValue(pkmn.hp + pkmn.attack + pkmn.defense + pkmn.speed + pkmn.special);
+                }
+            }
+            for (int i = 0; i < 10; i++) {
+                poke.autoSizeColumn(i);
+            }
+            // This is annoying. You cannot do CellRangeAddress.valueOf("$D:$D") to apply it to the whole column, so this is the workaround.
+            SheetConditionalFormatting sheetConditionalFormatting = poke.getSheetConditionalFormatting();
+            CellRangeAddress [] hpRegion = { CellRangeAddress.valueOf("D2:D" + poke.getLastRowNum()+1) };
+            CellRangeAddress [] atkRegion = { CellRangeAddress.valueOf("E2:E" + poke.getLastRowNum()+1) };
+            CellRangeAddress [] defRegion = { CellRangeAddress.valueOf("F2:F" + poke.getLastRowNum()+1) };
+            CellRangeAddress [] spdRegion = { CellRangeAddress.valueOf("G2:G" + poke.getLastRowNum()+1) };
+            CellRangeAddress [] specialRegion = { CellRangeAddress.valueOf("H2:H" + poke.getLastRowNum()+1) };
+            CellRangeAddress [] bstRegion = { CellRangeAddress.valueOf("I2:I" + poke.getLastRowNum()+1) };
+
+            ConditionalFormattingRule formattingRule = sheetConditionalFormatting.createConditionalFormattingColorScaleRule();
+            ColorScaleFormatting colorScaleFormatting = formattingRule.getColorScaleFormatting();
+            Color [] colors = {new XSSFColor(new java.awt.Color(248, 105, 107)), new XSSFColor(new java.awt.Color(255, 235, 132)), new XSSFColor(new java.awt.Color(99, 190, 123))};
+            colorScaleFormatting.setColors(colors);
+            colorScaleFormatting.getThresholds()[0].setRangeType(ConditionalFormattingThreshold.RangeType.MIN);
+            colorScaleFormatting.getThresholds()[1].setRangeType(ConditionalFormattingThreshold.RangeType.PERCENTILE);
+            colorScaleFormatting.getThresholds()[1].setValue(50d);
+            colorScaleFormatting.getThresholds()[2].setRangeType(ConditionalFormattingThreshold.RangeType.MAX);
+
+            sheetConditionalFormatting.addConditionalFormatting(hpRegion, formattingRule);
+            sheetConditionalFormatting.addConditionalFormatting(atkRegion, formattingRule);
+            sheetConditionalFormatting.addConditionalFormatting(defRegion, formattingRule);
+            sheetConditionalFormatting.addConditionalFormatting(spdRegion, formattingRule);
+            sheetConditionalFormatting.addConditionalFormatting(specialRegion, formattingRule);
+            sheetConditionalFormatting.addConditionalFormatting(bstRegion, formattingRule);
+
+        } else {
+            // Handle the rest of the generations of pokemon.
+            int abils = romHandler.abilitiesPerPokemon();
+            rowOne.createCell(cellCounter++).setCellValue("NUM");
+            rowOne.createCell(cellCounter++).setCellValue("NAME");
+            rowOne.createCell(cellCounter++).setCellValue("TYPE");
+            rowOne.createCell(cellCounter++).setCellValue("HP");
+            rowOne.createCell(cellCounter++).setCellValue("ATK");
+            rowOne.createCell(cellCounter++).setCellValue("DEF");
+            rowOne.createCell(cellCounter++).setCellValue("SPD");
+            rowOne.createCell(cellCounter++).setCellValue("SPATK");
+            rowOne.createCell(cellCounter++).setCellValue("SPDEF");
+            rowOne.createCell(cellCounter++).setCellValue("BST");
+            for (int i = 0; i < abils; i++) {
+                rowOne.createCell(cellCounter++).setCellValue("ABILITY " + (i+1));
+            }
+            rowOne.createCell(cellCounter++).setCellValue("ITEM 1");
+            rowOne.createCell(cellCounter++).setCellValue("ITEM 2");
+            rowOne.createCell(cellCounter++).setCellValue("ITEM 3");
+
+            CellStyle centerCells = wb.createCellStyle();
+            centerCells.setAlignment(HorizontalAlignment.CENTER);
+            for(int i = 0; i < cellCounter; i++) {
+                rowOne.getCell(i).setCellStyle(centerCells);
+            }
+
+            for (Pokemon pkmn : allPokes) {
+                if (pkmn != null) {
+                    String typeString = pkmn.primaryType == null ? "???" : pkmn.primaryType.toString();
+                    if (pkmn.secondaryType != null) {
+                        typeString += "/" + pkmn.secondaryType.toString();
+                    }
+                    Row temp = poke.createRow(rowCounter++);
+                    int tempCellCounter = 0;
+                    temp.createCell(tempCellCounter++).setCellValue(pkmn.number);
+                    temp.createCell(tempCellCounter++).setCellValue(pkmn.name);
+                    temp.createCell(tempCellCounter++).setCellValue(typeString);
+                    temp.createCell(tempCellCounter++).setCellValue(pkmn.hp);
+                    temp.createCell(tempCellCounter++).setCellValue(pkmn.attack);
+                    temp.createCell(tempCellCounter++).setCellValue(pkmn.defense);
+                    temp.createCell(tempCellCounter++).setCellValue(pkmn.speed);
+                    temp.createCell(tempCellCounter++).setCellValue(pkmn.spatk);
+                    temp.createCell(tempCellCounter++).setCellValue(pkmn.spdef);
+                    temp.createCell(tempCellCounter++).setCellValue(pkmn.hp + pkmn.attack + pkmn.defense + pkmn.speed + pkmn.spatk + pkmn.spdef);
+
+                    if (abils > 0) {
+                        temp.createCell(tempCellCounter++).setCellValue(romHandler.abilityName(pkmn.ability1));
+                        temp.createCell(tempCellCounter++).setCellValue(romHandler.abilityName(pkmn.ability2));
+                        if (abils > 2) {
+                            temp.createCell(tempCellCounter++).setCellValue(romHandler.abilityName(pkmn.ability3));
+                        }
+                    }
+
+                    if (pkmn.guaranteedHeldItem > 0) {
+                        temp.createCell(tempCellCounter++).setCellValue(itemNames[pkmn.guaranteedHeldItem] + " (100%)");
+                    } else {
+                        if (pkmn.commonHeldItem > 0) {
+                            temp.createCell(tempCellCounter++).setCellValue(itemNames[pkmn.commonHeldItem] + " (common)");
+                        }
+                        if (pkmn.rareHeldItem > 0) {
+                            temp.createCell(tempCellCounter++).setCellValue(itemNames[pkmn.rareHeldItem] + " (rare)");
+                        }
+                        if (pkmn.darkGrassHeldItem > 0) {
+                            temp.createCell(tempCellCounter++).setCellValue(itemNames[pkmn.darkGrassHeldItem] + " (dark grass only)");
+                        }
+                    }
+                }
+            }
+            for (int i = 0; i < 14; i++) {
+                poke.autoSizeColumn(i);
+            }
+            SheetConditionalFormatting sheetConditionalFormatting = poke.getSheetConditionalFormatting();
+            CellRangeAddress [] hpRegion = { CellRangeAddress.valueOf("D2:D" + poke.getLastRowNum()+1) };
+            CellRangeAddress [] atkRegion = { CellRangeAddress.valueOf("E2:E" + poke.getLastRowNum()+1) };
+            CellRangeAddress [] defRegion = { CellRangeAddress.valueOf("F2:F" + poke.getLastRowNum()+1) };
+            CellRangeAddress [] spdRegion = { CellRangeAddress.valueOf("G2:G" + poke.getLastRowNum()+1) };
+            CellRangeAddress [] spatkRegion = { CellRangeAddress.valueOf("H2:H" + poke.getLastRowNum()+1) };
+            CellRangeAddress [] spdefRegion = { CellRangeAddress.valueOf("I2:I" + poke.getLastRowNum()+1) };
+            CellRangeAddress [] bstRegion = { CellRangeAddress.valueOf("J2:J" + poke.getLastRowNum()+1) };
+
+            ConditionalFormattingRule formattingRule = sheetConditionalFormatting.createConditionalFormattingColorScaleRule();
+            ColorScaleFormatting colorScaleFormatting = formattingRule.getColorScaleFormatting();
+            Color [] colors = {new XSSFColor(new java.awt.Color(248, 105, 107)), new XSSFColor(new java.awt.Color(255, 235, 132)), new XSSFColor(new java.awt.Color(99, 190, 123))};
+            colorScaleFormatting.setColors(colors);
+            colorScaleFormatting.getThresholds()[0].setRangeType(ConditionalFormattingThreshold.RangeType.MIN);
+            colorScaleFormatting.getThresholds()[1].setRangeType(ConditionalFormattingThreshold.RangeType.PERCENTILE);
+            colorScaleFormatting.getThresholds()[1].setValue(50d);
+            colorScaleFormatting.getThresholds()[2].setRangeType(ConditionalFormattingThreshold.RangeType.MAX);
+
+            sheetConditionalFormatting.addConditionalFormatting(hpRegion, formattingRule);
+            sheetConditionalFormatting.addConditionalFormatting(atkRegion, formattingRule);
+            sheetConditionalFormatting.addConditionalFormatting(defRegion, formattingRule);
+            sheetConditionalFormatting.addConditionalFormatting(spdRegion, formattingRule);
+            sheetConditionalFormatting.addConditionalFormatting(spatkRegion, formattingRule);
+            sheetConditionalFormatting.addConditionalFormatting(spdefRegion, formattingRule);
+            sheetConditionalFormatting.addConditionalFormatting(bstRegion, formattingRule);
+        }
+    }
+
+    private void logRandomizedEvolutions(Workbook wb, PrintStream log, RomHandler romHandler) {
+        log.println("--Randomized Evolutions--");
+        List<Pokemon> allPokes = romHandler.getPokemon();
+        for (Pokemon pk : allPokes) {
+            if (pk != null) {
+                int numEvos = pk.evolutionsFrom.size();
+                if (numEvos > 0) {
+                    StringBuilder evoStr = new StringBuilder(pk.evolutionsFrom.get(0).to.name);
+                    for (int i = 1; i < numEvos; i++) {
+                        if (i == numEvos - 1) {
+                            evoStr.append(" and " + pk.evolutionsFrom.get(i).to.name);
+                        } else {
+                            evoStr.append(", " + pk.evolutionsFrom.get(i).to.name);
+                        }
+                    }
+                    log.println(pk.name + " now evolves into " + evoStr.toString());
+                }
+            }
+        }
+        log.println();
+        if(wb != null) {
+            logToWorkbookRandomizedEvolutions(wb, romHandler);
+       }
+    }
+
+    private void logToWorkbookRandomizedEvolutions(Workbook wb, RomHandler romHandler) {
+        int rowCounter = 0;
+        Sheet evos = wb.getSheetAt(1);
+
+        List<Pokemon> allPokes = romHandler.getPokemon();
+        String[] itemNames = romHandler.getItemNames();
+        List<Move> moves = romHandler.getMoves();
+        for (Pokemon pk : allPokes) {
+            if (pk != null) {
+                int numEvos = pk.evolutionsFrom.size();
+                if (numEvos > 0) {
+                    int tempCellCounter = 0;
+                    Row temp = evos.createRow(rowCounter++);
+                    temp.createCell(tempCellCounter++).setCellValue(pk.evolutionsFrom.get(0).from.name);
+                    temp.createCell(tempCellCounter++).setCellValue("now evolves into");
+
+                    StringBuilder evoStr = new StringBuilder();
+                    StringBuilder evoTypeStr = new StringBuilder();
+                    for (int i = 0; i < numEvos; i++) {
+                        EvolutionType evoType = pk.evolutionsFrom.get(i).type;
+                        evoTypeStr.append(evoType.toString());
+                        if(evoType.usesLevel()) {
+                            evoTypeStr.append(pk.evolutionsFrom.get(i).extraInfo);
+                        } else if(evoType.isItem()) {
+                            evoTypeStr.append(itemNames[pk.evolutionsFrom.get(i).extraInfo]);
+                        } else if(evoType == EvolutionType.LEVEL_WITH_MOVE) {
+                            for(Move move : moves) {
+                                if(move == null)
+                                    continue;
+                                if(move.number == pk.evolutionsFrom.get(i).extraInfo) {
+                                    evoTypeStr.append(move.name);
+                                }
+                            }
+                        } else if(evoType == EvolutionType.LEVEL_WITH_OTHER || evoType == EvolutionType.TRADE_SPECIAL) {
+                            evoTypeStr.append(allPokes.get(pk.evolutionsFrom.get(i).extraInfo).name);
+                        }
+                        evoStr.append( pk.evolutionsFrom.get(i).to.name);
+
+                        if (i == numEvos-2) {
+                            evoStr.append(" and ");
+                            evoTypeStr.append("; ");
+                        } else if( i < numEvos-1) {
+                            evoStr.append(", ");
+                            evoTypeStr.append("; ");
+                        }
+                    }
+                    temp.createCell(tempCellCounter++).setCellValue(evoStr.toString());
+
+                    temp.createCell(tempCellCounter++).setCellValue("by way of (respectively): " + evoTypeStr.toString());
+                }
+            }
+        }
+        for (int i = 0; i < 4; i++) {
+            evos.autoSizeColumn(i);
         }
     }
 
