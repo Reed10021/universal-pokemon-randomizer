@@ -74,7 +74,7 @@ public class Gen5Constants {
 
     public static final int waterStoneIndex = 84;
 
-    public static final int highestAbilityIndex = 123;
+    public static final int highestAbilityIndex = 164;
 
     public static final int normalItemSetVarCommand = 0x28, hiddenItemSetVarCommand = 0x2A, normalItemVarSet = 0x800C,
             hiddenItemVarSet = 0x8000;
@@ -383,14 +383,14 @@ public class Gen5Constants {
         tag(trs, 0x235, "ELITE2"); // Grimsley
         tag(trs, 0x236, "ELITE3"); // Caitlin
         tag(trs, 0x234, "ELITE4"); // Marshal
-        tag(trs, 0x197, "CHAMPION"); // Alder
+        tagSpecial(trs, 0x197, "CHAMPION"); // Alder
 
         // Ubers?
-        tag(trs, 0x21E, "UBER"); // Game Freak Guy
-        tag(trs, 0x237, "UBER"); // Cynthia
-        tag(trs, 0xE8, "UBER"); // Ghetsis
-        tag(trs, 0x24A, "UBER"); // N-White
-        tag(trs, 0x24B, "UBER"); // N-Black
+        tagSpecial(trs, 0x21E, "UBER"); // Game Freak Guy
+        tagSpecial(trs, 0x237, "UBER"); // Cynthia
+        tagSpecial(trs, 0xE8, "UBER"); // Ghetsis
+        tagSpecial(trs, 0x24A, "UBER"); // N-White
+        tagSpecial(trs, 0x24B, "UBER"); // N-Black
 
         // Rival - Cheren
         tagRivalBW(trs, "RIVAL1", 0x35);
@@ -487,20 +487,19 @@ public class Gen5Constants {
         // Uber-Trainers
         // There are *fourteen* ubers of 17 allowed (incl. the champion)
         // It's a rather stacked game...
-        tag(trs, 0x246, "UBER"); // Alder
-        tag(trs, 0x1c8, "UBER"); // Cynthia
-        tag(trs, 0xca, "UBER"); // Benga/BlackTower
-        tag(trs, 0xc9, "UBER"); // Benga/WhiteTreehollow
-        tag(trs, 0x5, "UBER"); // N/Zekrom
-        tag(trs, 0x6, "UBER"); // N/Reshiram
-        tag(trs, 0x30e, "UBER"); // N/Spring
-        tag(trs, 0x30f, "UBER"); // N/Summer
-        tag(trs, 0x310, "UBER"); // N/Autumn
-        tag(trs, 0x311, "UBER"); // N/Winter
-        tag(trs, 0x159, "UBER"); // Ghetsis
-        tag(trs, 0x8c, "UBER"); // Game Freak Guy
-        tag(trs, 0x24f, "UBER"); // Game Freak Leftovers Guy
-
+        tagSpecial(trs, 0x246, "UBER"); // Alder
+        tagSpecial(trs, 0x1c8, "UBER"); // Cynthia
+        tagSpecial(trs, 0xca, "UBER"); // Benga/BlackTower
+        tagSpecial(trs, 0xc9, "UBER"); // Benga/WhiteTreehollow
+        tagSpecial(trs, 0x5, "UBER"); // N/Zekrom
+        tagSpecial(trs, 0x6, "UBER"); // N/Reshiram
+        tagSpecial(trs, 0x30e, "UBER"); // N/Spring
+        tagSpecial(trs, 0x30f, "UBER"); // N/Summer
+        tagSpecial(trs, 0x310, "UBER"); // N/Autumn
+        tagSpecial(trs, 0x311, "UBER"); // N/Winter
+        tagSpecial(trs, 0x159, "UBER"); // Ghetsis
+        tagSpecial(trs, 0x8c, "UBER"); // Game Freak Guy
+        tagSpecial(trs, 0x24f, "UBER"); // Game Freak Leftovers Guy
     }
 
     private static void tagRivalBW(List<Trainer> allTrainers, String tag, int offset) {
@@ -513,6 +512,13 @@ public class Gen5Constants {
     private static void tag(List<Trainer> allTrainers, int number, String tag) {
         if (allTrainers.size() > (number - 1)) {
             allTrainers.get(number - 1).tag = tag;
+        }
+    }
+
+    private static void tagSpecial(List<Trainer> allTrainers, int number, String tag) {
+        if (allTrainers.size() > (number - 1)) {
+            allTrainers.get(number - 1).tag = tag;
+            allTrainers.get(number - 1).importantTrainer = true;
         }
     }
 

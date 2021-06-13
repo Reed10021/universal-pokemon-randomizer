@@ -1151,17 +1151,23 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
             // Grass has to be handled on its own because the levels
             // are reused for every time of day
             if (rates[0] != 0) {
+                EncounterSet grass = encounters.next();
+                for (int i = 0; i < 12; i++) 
+                {
+                    b[8 + i] = (byte)grass.encounters.get(i).level;
+                }
+                
                 if (!useTimeOfDay) {
                     // Get a single set of encounters...
                     // Write the encounters we get 3x for morning, day, night
-                    EncounterSet grass = encounters.next();
                     writePokemonHGSS(b, 20, grass.encounters);
                     writePokemonHGSS(b, 44, grass.encounters);
                     writePokemonHGSS(b, 68, grass.encounters);
                 } else {
                     for (int i = 0; i < 3; i++) {
-                        EncounterSet grass = encounters.next();
                         writePokemonHGSS(b, 20 + i * 24, grass.encounters);
+                        if( encounters.hasNext() )
+                            grass = encounters.next();
                     }
                 }
             }
@@ -1296,7 +1302,7 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                     TrainerPokemon tpk = new TrainerPokemon();
                     tpk.level = level;
                     tpk.pokemon = pokes[species];
-                    tpk.AILevel = ailevel;
+                    tpk.difficulty = ailevel;
                     tpk.ability = trpoke[pokeOffs + 1] & 0xFF;
                     pokeOffs += 6;
                     if ((tr.poketype & 2) == 2) {
@@ -1373,7 +1379,7 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                 Iterator<TrainerPokemon> tpokes = tr.pokemon.iterator();
                 for (int poke = 0; poke < numPokes; poke++) {
                     TrainerPokemon tp = tpokes.next();
-                    writeWord(trpoke, pokeOffs, tp.AILevel);
+                    writeWord(trpoke, pokeOffs, tp.difficulty);
                     writeWord(trpoke, pokeOffs + 2, tp.level);
                     writeWord(trpoke, pokeOffs + 4, tp.pokemon.number);
                     pokeOffs += 6;

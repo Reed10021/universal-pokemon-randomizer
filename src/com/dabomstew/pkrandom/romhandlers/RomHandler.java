@@ -32,6 +32,8 @@ import java.util.Random;
 
 import com.dabomstew.pkrandom.CustomNamesSet;
 import com.dabomstew.pkrandom.MiscTweak;
+import com.dabomstew.pkrandom.Settings;
+import com.dabomstew.pkrandom.pokemon.Encounter;
 import com.dabomstew.pkrandom.pokemon.EncounterSet;
 import com.dabomstew.pkrandom.pokemon.GenRestrictions;
 import com.dabomstew.pkrandom.pokemon.IngameTrade;
@@ -99,6 +101,10 @@ public interface RomHandler {
     // tooltips)
     public void randomizePokemonStats(boolean evolutionSanity);
 
+    // Truely Randomize stats following evolutions for proportions or not (see
+    // tooltips)
+    public void truerandomizePokemonStats(boolean evolutionSanity);
+    
     // Update base stats to gen6
     public void updatePokemonStats();
 
@@ -112,6 +118,10 @@ public interface RomHandler {
     // Give a random legendary Pokemon who's in this game
     // Business rules for who's legendary are in Pokemon class
     public Pokemon randomLegendaryPokemon();
+    
+    // Give a random Pokemon who has 1 or two evolution stages
+    // Might make a good starter Pokemon
+    public Pokemon random1or2EvosPokemon();
 
     // Give a random Pokemon who has 2 evolution stages
     // Should make a good starter Pokemon
@@ -138,20 +148,23 @@ public interface RomHandler {
     public String abilityName(int number);
 
     public void randomizeAbilities(boolean evolutionSanity, boolean allowWonderGuard, boolean banTrappingAbilities,
-            boolean banNegativeAbilities);
+            boolean banNegativeAbilities, boolean isForcingTwoAbilities);
 
     // Randomizer: wild pokemon
+    public Encounter levelUpEncounterPub(Encounter enc, int wildLevelHighModifier, int wildLevelLowModifier);
+    
     public List<EncounterSet> getEncounters(boolean useTimeOfDay);
 
     public void setEncounters(boolean useTimeOfDay, List<EncounterSet> encounters);
 
     public void randomEncounters(boolean useTimeOfDay, boolean catchEmAll, boolean typeThemed, boolean usePowerLevels,
-            boolean noLegendaries);
+            boolean noLegendaries, int wildLevelHighModifier, int wildLevelLowModifier);
 
     public void area1to1Encounters(boolean useTimeOfDay, boolean catchEmAll, boolean typeThemed,
-            boolean usePowerLevels, boolean noLegendaries);
+            boolean usePowerLevels, boolean noLegendaries, int wildLevelHighModifier, int wildLevelLowModifier);
 
-    public void game1to1Encounters(boolean useTimeOfDay, boolean usePowerLevels, boolean noLegendaries);
+    public void game1to1Encounters(boolean useTimeOfDay, boolean usePowerLevels, boolean noLegendaries,
+            int wildLevelHighModifier, int wildLevelLowModifier);
 
     public boolean hasTimeBasedEncounters();
 
@@ -161,12 +174,14 @@ public interface RomHandler {
     public List<Trainer> getTrainers();
 
     public void setTrainers(List<Trainer> trainerData);
+    
+    public void levelUpTrainerPokes(int levelModifier, int minDifficulty);
 
     public void randomizeTrainerPokes(boolean usePowerLevels, boolean noLegendaries, boolean noEarlyWonderGuard,
-            int levelModifier);
+            int levelModifier, int minDifficulty);
 
     public void typeThemeTrainerPokes(boolean usePowerLevels, boolean weightByFrequency, boolean noLegendaries,
-            boolean noEarlyWonderGuard, int levelModifier);
+            boolean noEarlyWonderGuard, int levelModifier, int minDifficulty);
 
     public void rivalCarriesStarter();
 
@@ -209,9 +224,13 @@ public interface RomHandler {
     public void setMovesLearnt(Map<Pokemon, List<MoveLearnt>> movesets);
 
     public List<Integer> getMovesBannedFromLevelup();
+    
+    public void removeBrokenMoves();
 
-    public void randomizeMovesLearnt(boolean typeThemed, boolean noBroken, boolean forceFourStartingMoves,
+    public void randomizeMovesLearnt(int typeThemed, boolean noBroken, boolean forceFourStartingMoves,
             double goodDamagingProbability);
+    
+    public void forceFourStartingMovesOnly();
 
     public void orderDamagingMovesByDamage();
 
@@ -259,7 +278,7 @@ public interface RomHandler {
 
     public void setTMHMCompatibility(Map<Pokemon, boolean[]> compatData);
 
-    public void randomizeTMHMCompatibility(boolean preferSameType);
+    public void randomizeTMHMCompatibility(Settings.TMsHMsCompatibilityMod preferSameType);
 
     public void fullTMHMCompatibility();
 
@@ -285,7 +304,7 @@ public interface RomHandler {
 
     public void setMoveTutorCompatibility(Map<Pokemon, boolean[]> compatData);
 
-    public void randomizeMoveTutorCompatibility(boolean preferSameType);
+    public void randomizeMoveTutorCompatibility(Settings.MoveTutorsCompatibilityMod preferSameType);
 
     public void fullMoveTutorCompatibility();
 
@@ -339,7 +358,7 @@ public interface RomHandler {
 
     public ItemList getNonBadItems();
 
-    public void randomizeWildHeldItems(boolean banBadItems);
+    public void randomizeWildHeldItems(boolean banBadItems, int ForceMode);
 
     public String[] getItemNames();
 

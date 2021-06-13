@@ -33,7 +33,12 @@ public class TrainerPokemon {
     public int move3;
     public int move4;
 
-    public int AILevel;
+    /**
+     * "Difficulty" is assigned by the following formula:
+     *  (difficulty) * 31 / 255
+     *  The resulting quotient will be the IVs for the pokemon.
+     */
+    public int difficulty;
     public int heldItem;
     public int ability;
     

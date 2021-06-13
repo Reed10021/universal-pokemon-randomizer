@@ -138,6 +138,42 @@ public class Pokemon implements Comparable<Pokemon> {
         }
 
     }
+    
+    public void truelyRandomizeStats(Random random) {
+        /*if (number == 292) {
+            // Shedinja is horribly broken unless we restrict him to 1HP.
+            int bst = bst() - 51;
+
+            // Make weightings
+            double atkW = random.nextDouble(), defW = random.nextDouble();
+            double spaW = random.nextDouble(), spdW = random.nextDouble(), speW = random.nextDouble();
+
+            double totW = atkW + defW + spaW + spdW + speW;
+
+            hp = 1;
+            attack = (int) Math.max(1, Math.round(atkW / totW * bst)) + 10;
+            defense = (int) Math.max(1, Math.round(defW / totW * bst)) + 10;
+            spatk = (int) Math.max(1, Math.round(spaW / totW * bst)) + 10;
+            spdef = (int) Math.max(1, Math.round(spdW / totW * bst)) + 10;
+            speed = (int) Math.max(1, Math.round(speW / totW * bst)) + 10;
+
+            // Fix up special too
+            special = (int) Math.ceil((spatk + spdef) / 2.0f);
+
+        } else*/ {
+            //Range is 1-255
+            hp = (int) random.nextInt(255) + 1;
+            attack = (int) random.nextInt(255) + 1;
+            defense = (int) random.nextInt(255) + 1;
+            spatk = (int) random.nextInt(255) + 1;
+            spdef = (int) random.nextInt(255) + 1;
+            speed = (int) random.nextInt(255) + 1;
+
+            // Calculate special
+            special = (int) Math.ceil((spatk + spdef) / 2.0f);
+        }
+
+    }
 
     public void copyRandomizedStatsUpEvolution(Pokemon evolvesFrom) {
         double ourBST = bst();
@@ -209,7 +245,7 @@ public class Pokemon implements Comparable<Pokemon> {
     }
 
     private static final List<Integer> legendaries = Arrays.asList(144, 145, 146, 150, 151, 243, 244, 245, 249, 250,
-            251, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 479, 480, 481, 482, 483, 484, 485, 486, 487, 488,
+            251, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 480, 481, 482, 483, 484, 485, 486, 487, 488,
             489, 490, 491, 492, 493, 494, 638, 639, 640, 641, 642, 643, 644, 645, 646, 647, 648, 649);
 
     public boolean isLegendary() {

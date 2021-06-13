@@ -240,6 +240,37 @@ public class SettingsUpdater {
             // add space for the trainer level modifier
             insertExtraByte(35, (byte) 50); // 50 in the settings file = +0% after adjustment
         }
+        
+        if( oldVersion < 174 ) 
+        {
+            //172 to 174: added wild pokemon level increase
+            insertExtraByte(36, (byte) 0); // 0 in the settings file
+            //added wild pokemon random level increase
+            insertExtraByte(37, (byte) 0); // 0 in the settings file
+        }
+        
+        if( oldVersion < 177 ) 
+        {
+            //174 to 177: added force wild held item byte
+            insertExtraByte(38, (byte) 0); // 0 in the settings file
+        }
+
+        if( oldVersion < 180 ) {
+           //177 to 180: Added new TM / Move Tutor options
+            // if byte 18 bit 6 is toggled, move it to byte 19 bit 1
+            if ((dataBlock[18] & 0x40) != 0) {
+                dataBlock[19] |= (1 << 1);
+                // Clear bit 6
+                dataBlock[18] = (byte)(dataBlock[18] & 0xBF);
+
+            }
+            // if byte 21 bit 6 is toggled, move it to byte 19 bit 2
+            if ((dataBlock[21] & 0x40) != 0) {
+                dataBlock[19] |= (1 << 2);
+                // Clear bit 6
+                dataBlock[21] = (byte)(dataBlock[18] & 0xBF);
+            }
+        }
 
         // fix checksum
         CRC32 checksum = new CRC32();

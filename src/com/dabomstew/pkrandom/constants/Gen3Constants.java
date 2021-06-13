@@ -17,6 +17,7 @@ public class Gen3Constants {
     public static final int size8M = 0x800000, size16M = 0x1000000, size32M = 0x2000000;
 
     public static final String unofficialEmeraldROMName = "YJencrypted";
+    public static final String unofficialEmeraldROMName2 = "POKEMON EMRR";
 
     public static final int romNameOffset = 0xA0, romCodeOffset = 0xAC, romVersionOffset = 0xBC,
             headerChecksumOffset = 0xBD;
@@ -287,7 +288,7 @@ public class Gen3Constants {
         tag(trs, 0x106, "ELITE2");
         tag(trs, 0x107, "ELITE3");
         tag(trs, 0x108, "ELITE4");
-        tag(trs, 0x14F, "CHAMPION");
+        tagSpecial(trs, 0x14F, "CHAMPION");
         // Brendan
         tag(trs, 0x208, "RIVAL1-2");
         tag(trs, 0x20B, "RIVAL1-0");
@@ -412,8 +413,19 @@ public class Gen3Constants {
         tag(trs, "THEMED:SHELLY", 0x20, 0x21);
 
         // Steven
-        tag(trs, 0x324, "UBER");
+        tagSpecial(trs, 0x324, "UBER");
 
+    }
+
+    public static void trainerTagsE_Reed(List<Trainer> trs) {
+
+        tagSpecial(trs, 0x357, "DONT_RANDOMIZE");
+
+        tagSpecial(trs, 0x358, "DONT_RANDOMIZE");
+
+        tagSpecial(trs, 0x359, "DONT_RANDOMIZE");
+
+        tagSpecial(trs, 0x35A, "DONT_RANDOMIZE");
     }
 
     public static void trainerTagsFRLG(List<Trainer> trs) {
@@ -492,19 +504,24 @@ public class Gen3Constants {
         tag(trs, 0x1B4, "RIVAL7-2");
 
         // E4 Round 1
-        tag(trs, 0x1B8, "RIVAL8-0");
-        tag(trs, 0x1B6, "RIVAL8-1");
-        tag(trs, 0x1B7, "RIVAL8-2");
+        tagSpecial(trs, 0x1B8, "RIVAL8-0");
+        tagSpecial(trs, 0x1B6, "RIVAL8-1");
+        tagSpecial(trs, 0x1B7, "RIVAL8-2");
 
         // E4 Round 2
-        tag(trs, 0x2E5, "RIVAL9-0");
-        tag(trs, 0x2E3, "RIVAL9-1");
-        tag(trs, 0x2E4, "RIVAL9-2");
+        tagSpecial(trs, 0x2E5, "RIVAL9-0");
+        tagSpecial(trs, 0x2E3, "RIVAL9-1");
+        tagSpecial(trs, 0x2E4, "RIVAL9-2");
 
     }
 
     private static void tag(List<Trainer> trainers, int trainerNum, String tag) {
         trainers.get(trainerNum - 1).tag = tag;
+    }
+
+    private static void tagSpecial(List<Trainer> trainers, int trainerNum, String tag) {
+        trainers.get(trainerNum - 1).tag = tag;
+        trainers.get(trainerNum - 1).importantTrainer = true;
     }
 
     private static void tag(List<Trainer> allTrainers, String tag, int... numbers) {

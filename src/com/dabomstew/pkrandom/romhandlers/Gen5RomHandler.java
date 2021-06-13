@@ -1025,7 +1025,7 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
                     TrainerPokemon tpk = new TrainerPokemon();
                     tpk.level = level;
                     tpk.pokemon = pokes[species];
-                    tpk.AILevel = ailevel;
+                    tpk.difficulty = ailevel;
                     tpk.ability = trpoke[pokeOffs + 1] & 0xFF;
                     pokeOffs += 8;
                     if ((tr.poketype & 2) == 2) {
@@ -1062,7 +1062,7 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
                             TrainerPokemon tpk = new TrainerPokemon();
                             tpk.level = 25;
                             tpk.pokemon = pokes[readWord(pkmndata, 0)];
-                            tpk.AILevel = 255;
+                            tpk.difficulty = 255;
                             tpk.heldItem = readWord(pkmndata, 12);
                             tpk.move1 = readWord(pkmndata, 2);
                             tpk.move2 = readWord(pkmndata, 4);
@@ -1113,7 +1113,7 @@ public class Gen5RomHandler extends AbstractDSRomHandler {
                 Iterator<TrainerPokemon> tpokes = tr.pokemon.iterator();
                 for (int poke = 0; poke < numPokes; poke++) {
                     TrainerPokemon tp = tpokes.next();
-                    trpoke[pokeOffs] = (byte) tp.AILevel;
+                    trpoke[pokeOffs] = (byte) tp.difficulty;
                     // no gender or ability info, so no byte 1
                     writeWord(trpoke, pokeOffs + 2, tp.level);
                     writeWord(trpoke, pokeOffs + 4, tp.pokemon.number);

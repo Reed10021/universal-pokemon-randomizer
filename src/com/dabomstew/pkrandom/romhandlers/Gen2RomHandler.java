@@ -625,6 +625,49 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
                 es.encounters.add(enc);
             }
             offset++;
+            if(romEntry.isCrystal) {
+                switch(i) {
+                    case 0:
+                        es.displayName = "Route 44 Headbutt Tree Set (Moderate)";
+                        break;
+                    case 1:
+                        es.displayName = "Route 44 Headbutt Tree Set (High)";
+                        break;
+                    case 2:
+                        es.displayName = "Azalea Town, Route 33/42 Headbutt Tree Set (Moderate)";
+                        break;
+                    case 3:
+                        es.displayName = "Azalea Town, Route 33/42 Headbutt Tree Set (High)";
+                        break;
+                    case 4:
+                        es.displayName = "Route 29/30/31/34/35/36/37/38/39 Headbutt Tree Set (Moderate)";
+                        break;
+                    case 5:
+                        es.displayName = "Route 29/30/31/34/35/36/37/38/39 Headbutt Tree Set (High)";
+                        break;
+                    case 6:
+                        es.displayName = "Route 26/27/32 Headbutt Tree Set (Moderate)";
+                        break;
+                    case 7:
+                        es.displayName = "Route 26/27/32 Headbutt Tree Set (High)";
+                        break;
+                    case 8:
+                        es.displayName = "Lake of Rage, Route 43 Headbutt Tree Set (Moderate)";
+                        break;
+                    case 9:
+                        es.displayName = "Lake of Rage, Route 43 Headbutt Tree Set (High)";
+                        break;
+                    case 10:
+                        es.displayName = "Ilex Forest Headbutt Tree Set (Moderate)";
+                        break;
+                    case 11:
+                        es.displayName = "Ilex Forest Headbutt Tree Set (High)";
+                        break;
+                     case 12:
+                        es.displayName = "Rock Smash Set";
+                        break;
+                }
+            }
             areas.add(es);
         }
 
@@ -792,9 +835,11 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
                 for (int i = 0; i < 3; i++) {
                     EncounterSet encset = areas.next();
                     Iterator<Encounter> encountersHere = encset.encounters.iterator();
-                    for (int j = 0; j < Gen2Constants.landEncounterSlots; j++) {
-                        rom[offset + 5 + (i * Gen2Constants.landEncounterSlots * 2) + (j * 2) + 1] = (byte) encountersHere
-                                .next().pokemon.number;
+                    for (int j = 0; j < Gen2Constants.landEncounterSlots; j++) 
+                    {
+                        Encounter enc = encountersHere.next();
+                        rom[offset + 5 + (i * Gen2Constants.landEncounterSlots * 2) + (j * 2)] = (byte) enc.level;
+                        rom[offset + 5 + (i * Gen2Constants.landEncounterSlots * 2) + (j * 2) + 1] = (byte) enc.pokemon.number;
                     }
                 }
             } else {
@@ -802,9 +847,11 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
                 EncounterSet encset = areas.next();
                 for (int i = 0; i < 3; i++) {
                     Iterator<Encounter> encountersHere = encset.encounters.iterator();
-                    for (int j = 0; j < Gen2Constants.landEncounterSlots; j++) {
-                        rom[offset + 5 + (i * Gen2Constants.landEncounterSlots * 2) + (j * 2) + 1] = (byte) encountersHere
-                                .next().pokemon.number;
+                    for (int j = 0; j < Gen2Constants.landEncounterSlots; j++) 
+                    {
+                        Encounter enc = encountersHere.next();
+                        rom[offset + 5 + (i * Gen2Constants.landEncounterSlots * 2) + (j * 2)] = (byte) enc.level;
+                        rom[offset + 5 + (i * Gen2Constants.landEncounterSlots * 2) + (j * 2) + 1] = (byte) enc.pokemon.number;
                     }
                 }
             }
@@ -817,8 +864,11 @@ public class Gen2RomHandler extends AbstractGBCRomHandler {
         while ((rom[offset] & 0xFF) != 0xFF) {
             EncounterSet encset = areas.next();
             Iterator<Encounter> encountersHere = encset.encounters.iterator();
-            for (int j = 0; j < Gen2Constants.seaEncounterSlots; j++) {
-                rom[offset + 3 + (j * 2) + 1] = (byte) encountersHere.next().pokemon.number;
+            for (int j = 0; j < Gen2Constants.seaEncounterSlots; j++) 
+            {
+                Encounter enc = encountersHere.next();
+                rom[offset + 3 + (j * 2)] =  (byte) enc.level;
+                rom[offset + 3 + (j * 2) + 1] = (byte) enc.pokemon.number;
             }
             offset += 3 + Gen2Constants.seaEncounterSlots * 2;
         }

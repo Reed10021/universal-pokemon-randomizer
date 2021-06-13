@@ -42,6 +42,7 @@ import com.dabomstew.pkrandom.pokemon.Pokemon;
 import com.dabomstew.pkrandom.pokemon.Trainer;
 import com.dabomstew.pkrandom.pokemon.TrainerPokemon;
 import com.dabomstew.pkrandom.romhandlers.Gen1RomHandler;
+import com.dabomstew.pkrandom.romhandlers.Gen4RomHandler;
 import com.dabomstew.pkrandom.romhandlers.Gen5RomHandler;
 import com.dabomstew.pkrandom.romhandlers.RomHandler;
 
@@ -153,6 +154,9 @@ public class Randomizer {
         case RANDOM:
             romHandler.randomizePokemonStats(settings.isBaseStatsFollowEvolutions());
             break;
+        case TRUERANDOM:
+            romHandler.truerandomizePokemonStats(settings.isBaseStatsFollowEvolutions());
+            break;
         default:
             break;
         }
@@ -164,7 +168,7 @@ public class Randomizer {
         // Abilities? (new 1.0.2)
         if (romHandler.abilitiesPerPokemon() > 0 && settings.getAbilitiesMod() == Settings.AbilitiesMod.RANDOMIZE) {
             romHandler.randomizeAbilities(settings.isAbilitiesFollowEvolutions(), settings.isAllowWonderGuard(),
-                    settings.isBanTrappingAbilities(), settings.isBanNegativeAbilities());
+                    settings.isBanTrappingAbilities(), settings.isBanNegativeAbilities(), settings.isForcingTwoAbilities() );
         }
 
         // Pokemon Types
@@ -181,7 +185,7 @@ public class Randomizer {
 
         // Wild Held Items?
         if (settings.isRandomizeWildPokemonHeldItems()) {
-            romHandler.randomizeWildHeldItems(settings.isBanBadRandomWildPokemonHeldItems());
+            romHandler.randomizeWildHeldItems(settings.isBanBadRandomWildPokemonHeldItems(), settings.getForceHeldItemMode() );
         }
 
         maybeLogBaseStatAndTypeChanges(log, romHandler);
@@ -244,10 +248,22 @@ public class Randomizer {
         double msGoodDamagingProb = settings.isMovesetsForceGoodDamaging() ? settings.getMovesetsGoodDamagingPercent() / 100.0
                 : 0;
         if (settings.getMovesetsMod() == Settings.MovesetsMod.RANDOM_PREFER_SAME_TYPE) {
-            romHandler.randomizeMovesLearnt(true, noBrokenMoves, forceFourLv1s, msGoodDamagingProb);
+            romHandler.randomizeMovesLearnt(1, noBrokenMoves, forceFourLv1s, msGoodDamagingProb);
+        }else if (settings.getMovesetsMod() == Settings.MovesetsMod.RANDOM_STRICT_TYPE_NORMAL) {
+            romHandler.randomizeMovesLearnt(2, noBrokenMoves, forceFourLv1s, msGoodDamagingProb);
+        }else if (settings.getMovesetsMod() == Settings.MovesetsMod.RANDOM_STRICT_TYPE) {
+            romHandler.randomizeMovesLearnt(3, noBrokenMoves, forceFourLv1s, msGoodDamagingProb);
         } else if (settings.getMovesetsMod() == Settings.MovesetsMod.COMPLETELY_RANDOM) {
-            romHandler.randomizeMovesLearnt(false, noBrokenMoves, forceFourLv1s, msGoodDamagingProb);
+            romHandler.randomizeMovesLearnt(0, noBrokenMoves, forceFourLv1s, msGoodDamagingProb);
+        } else {
+            if (noBrokenMoves) {
+                romHandler.removeBrokenMoves();
+            }
+            if( forceFourLv1s ) {
+                romHandler.forceFourStartingMovesOnly();
+            }
         }
+        
 
         if (settings.isReorderDamagingMoves()) {
             romHandler.orderDamagingMovesByDamage();
@@ -255,7 +271,59 @@ public class Randomizer {
 
         // Show the new movesets if applicable
         if (settings.getMovesetsMod() == Settings.MovesetsMod.UNCHANGED) {
-            log.println("Pokemon Movesets: Unchanged." + NEWLINE);
+            if(!settings.doBlockBrokenMoves() && !forceFourLv1s ) {
+                log.println("Pokemon Movesets: Unchanged." + NEWLINE);
+            }
+            else
+            {
+                if (settings.doBlockBrokenMoves()) {
+                    log.print("Pokemon Movesets: Removed Game-Breaking Moves (");
+                    List<Integer> gameBreakingMoves = romHandler.getGameBreakingMoves();
+                    int numberPrinted = 0;
+                    for (Move move : moves) {
+                        if (move == null) {
+                            continue;
+                        }
+                        if (gameBreakingMoves.contains(move.number)) {
+                            numberPrinted++;
+                            log.print(move.name);
+                            if (numberPrinted < gameBreakingMoves.size()) {
+                                log.print(", ");
+                            }
+                        }
+                    }
+                    log.println(")" + NEWLINE);
+                }
+                
+                if( forceFourLv1s ) {
+                    log.println("--Pokemon Movesets--");
+                    List<String> movesets = new ArrayList<String>();
+                    Map<Pokemon, List<MoveLearnt>> moveData = romHandler.getMovesLearnt();
+                    for (Pokemon pkmn : moveData.keySet()) {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(String.format("%03d %-10s : ", pkmn.number, pkmn.name));
+                        List<MoveLearnt> data = moveData.get(pkmn);
+                        boolean first = true;
+                        for (MoveLearnt ml : data) {
+                            if (!first) {
+                                sb.append(", ");
+                            }
+                            try {
+                                sb.append(moves.get(ml.move).name).append(" at level ").append(ml.level);
+                            } catch (NullPointerException ex) {
+                                sb.append("invalid move at level" + ml.level);
+                            }
+                            first = false;
+                        }
+                        movesets.add(sb.toString());
+                    }
+                    Collections.sort(movesets);
+                    for (String moveset : movesets) {
+                        log.println(moveset);
+                    }
+                    log.println();
+                }
+            }
         } else if (settings.getMovesetsMod() == Settings.MovesetsMod.METRONOME_ONLY) {
             log.println("Pokemon Movesets: Metronome Only." + NEWLINE);
         } else {
@@ -288,15 +356,20 @@ public class Randomizer {
         }
 
         // Trainer Pokemon
-        if (settings.getTrainersMod() == Settings.TrainersMod.RANDOM) {
+        if (settings.getTrainersMod() == Settings.TrainersMod.UNCHANGED && settings.isTrainersLevelModified() ){
+            romHandler.levelUpTrainerPokes(settings.getTrainersLevelModifier(),
+                    settings.getMinimumDifficulty());
+        } else if (settings.getTrainersMod() == Settings.TrainersMod.RANDOM) {
             romHandler.randomizeTrainerPokes(settings.isTrainersUsePokemonOfSimilarStrength(),
                     settings.isTrainersBlockLegendaries(), settings.isTrainersBlockEarlyWonderGuard(),
-                    settings.isTrainersLevelModified() ? settings.getTrainersLevelModifier() : 0);
+                    settings.isTrainersLevelModified() ? settings.getTrainersLevelModifier() : 0,
+                    settings.getMinimumDifficulty());
         } else if (settings.getTrainersMod() == Settings.TrainersMod.TYPE_THEMED) {
             romHandler.typeThemeTrainerPokes(settings.isTrainersUsePokemonOfSimilarStrength(),
                     settings.isTrainersMatchTypingDistribution(), settings.isTrainersBlockLegendaries(),
                     settings.isTrainersBlockEarlyWonderGuard(),
-                    settings.isTrainersLevelModified() ? settings.getTrainersLevelModifier() : 0);
+                    settings.isTrainersLevelModified() ? settings.getTrainersLevelModifier() : 0,
+                    settings.getMinimumDifficulty());
         }
 
         if ((settings.getTrainersMod() != Settings.TrainersMod.UNCHANGED || settings.getStartersMod() != Settings.StartersMod.UNCHANGED)
@@ -369,21 +442,40 @@ public class Randomizer {
                     settings.getWildPokemonRestrictionMod() == Settings.WildPokemonRestrictionMod.CATCH_EM_ALL,
                     settings.getWildPokemonRestrictionMod() == Settings.WildPokemonRestrictionMod.TYPE_THEME_AREAS,
                     settings.getWildPokemonRestrictionMod() == Settings.WildPokemonRestrictionMod.SIMILAR_STRENGTH,
-                    settings.isBlockWildLegendaries());
+                    settings.isBlockWildLegendaries(),
+                    settings.isWildLevelModifiedHigh() ? settings.getWildLevelHighModifier() : -1, 
+                    settings.isWildLevelModifiedLow() ? settings.getWildLevelLowModifier() : -1);
             break;
         case AREA_MAPPING:
             romHandler.area1to1Encounters(settings.isUseTimeBasedEncounters(),
                     settings.getWildPokemonRestrictionMod() == Settings.WildPokemonRestrictionMod.CATCH_EM_ALL,
                     settings.getWildPokemonRestrictionMod() == Settings.WildPokemonRestrictionMod.TYPE_THEME_AREAS,
                     settings.getWildPokemonRestrictionMod() == Settings.WildPokemonRestrictionMod.SIMILAR_STRENGTH,
-                    settings.isBlockWildLegendaries());
+                    settings.isBlockWildLegendaries(),
+                    settings.isWildLevelModifiedHigh() ? settings.getWildLevelHighModifier() : -1, 
+                    settings.isWildLevelModifiedLow() ? settings.getWildLevelLowModifier() : -1);
             break;
         case GLOBAL_MAPPING:
             romHandler.game1to1Encounters(settings.isUseTimeBasedEncounters(),
                     settings.getWildPokemonRestrictionMod() == Settings.WildPokemonRestrictionMod.SIMILAR_STRENGTH,
-                    settings.isBlockWildLegendaries());
+                    settings.isBlockWildLegendaries(),
+                    settings.isWildLevelModifiedHigh() ? settings.getWildLevelHighModifier() : -1, 
+                    settings.isWildLevelModifiedLow() ? settings.getWildLevelLowModifier() : -1);
             break;
         default:
+            if( settings.isWildLevelModifiedHigh() )
+            {
+                List<EncounterSet> encounters = romHandler.getEncounters(settings.isUseTimeBasedEncounters());
+                for (EncounterSet es : encounters) 
+                {
+                    for (Encounter enc : es.encounters) 
+                    {
+                        enc = romHandler.levelUpEncounterPub(enc, settings.getWildLevelHighModifier(),
+                                settings.isWildLevelModifiedLow() ? settings.getWildLevelLowModifier() : -1);
+                    }
+                }
+                romHandler.setEncounters(settings.isUseTimeBasedEncounters(), encounters);
+            }
             break;
         }
 
@@ -417,10 +509,9 @@ public class Randomizer {
         // TM/HM compatibility
         switch (settings.getTmsHmsCompatibilityMod()) {
         case RANDOM_PREFER_TYPE:
-            romHandler.randomizeTMHMCompatibility(true);
-            break;
+        case RANDOM_PREFER_TYPE_AND_NORMAL:
         case COMPLETELY_RANDOM:
-            romHandler.randomizeTMHMCompatibility(false);
+            romHandler.randomizeTMHMCompatibility(settings.getTmsHmsCompatibilityMod());
             break;
         case FULL:
             romHandler.fullTMHMCompatibility();
@@ -435,6 +526,38 @@ public class Randomizer {
 
         if (settings.isFullHMCompat()) {
             romHandler.fullHMCompatibility();
+        }
+
+        if(settings.getTmsHmsCompatibilityMod() != Settings.TMsHMsCompatibilityMod.FULL &&
+                settings.getTmsHmsCompatibilityMod() != Settings.TMsHMsCompatibilityMod.UNCHANGED) {
+            Map<Pokemon, boolean[]> compatMap = romHandler.getTMHMCompatibility();
+            List<String> movesets = new ArrayList<String>();
+            log.println("--TM Compatibility--");
+            for (Pokemon pkmn : compatMap.keySet()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("%03d %-10s : ", pkmn.number, pkmn.name));
+                boolean[] data = compatMap.get(pkmn);
+                boolean first = true;
+                for (int i = 1; i < data.length; i++) {
+                    if(data[i]) {
+                        if (!first) {
+                            sb.append(", ");
+                        }
+                        if(romHandler.getTMMoves().size() < i) {
+                            sb.append(String.format("HM%02d ", (i - romHandler.getTMMoves().size()))).append(moves.get(romHandler.getHMMoves().get(i - romHandler.getTMMoves().size() - 1)).name);
+                        } else {
+                            sb.append(String.format("TM%02d ", i)).append(moves.get(romHandler.getTMMoves().get(i - 1)).name);
+                        }
+                        first = false;
+                    }
+                }
+                movesets.add(sb.toString());
+            }
+            Collections.sort(movesets);
+            for (String moveset : movesets) {
+                log.println(moveset);
+            }
+            log.println();
         }
 
         // Move Tutors (new 1.0.3)
@@ -462,10 +585,9 @@ public class Randomizer {
             // Compatibility
             switch (settings.getMoveTutorsCompatibilityMod()) {
             case RANDOM_PREFER_TYPE:
-                romHandler.randomizeMoveTutorCompatibility(true);
-                break;
+            case RANDOM_PREFER_TYPE_AND_NORMAL:
             case COMPLETELY_RANDOM:
-                romHandler.randomizeMoveTutorCompatibility(false);
+                romHandler.randomizeMoveTutorCompatibility(settings.getMoveTutorsCompatibilityMod());
                 break;
             case FULL:
                 romHandler.fullMoveTutorCompatibility();
@@ -476,6 +598,36 @@ public class Randomizer {
 
             if (settings.isTutorLevelUpMoveSanity()) {
                 romHandler.ensureMoveTutorCompatSanity();
+            }
+
+            if(settings.getMoveTutorsCompatibilityMod() != Settings.MoveTutorsCompatibilityMod.FULL &&
+                    settings.getMoveTutorsCompatibilityMod() != Settings.MoveTutorsCompatibilityMod.UNCHANGED) {
+                Map<Pokemon, boolean[]> compatMap = romHandler.getMoveTutorCompatibility();
+                List<Integer> mts = romHandler.getMoveTutorMoves();
+                List<Move> moveData = romHandler.getMoves();
+                List<String> movesets = new ArrayList<String>();
+                log.println("--Move Tutor Compatibility--");
+                for (Pokemon pkmn : compatMap.keySet()) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(String.format("%03d %-10s : ", pkmn.number, pkmn.name));
+                    boolean[] data = compatMap.get(pkmn);
+                    boolean first = true;
+                    for (int i = 1; i < data.length; i++) {
+                        if(data[i]) {
+                            if (!first) {
+                                sb.append(", ");
+                            }
+                            sb.append(moves.get(romHandler.getMoveTutorMoves().get(i - 1)).name);
+                            first = false;
+                        }
+                    }
+                    movesets.add(sb.toString());
+                }
+                Collections.sort(movesets);
+                for (String moveset : movesets) {
+                    log.println(moveset);
+                }
+                log.println();
             }
         }
 
@@ -526,6 +678,8 @@ public class Randomizer {
         log.println("Randomization of " + romHandler.getROMName() + " completed.");
         log.println("Time elapsed: " + (System.currentTimeMillis() - startTime) + "ms");
         log.println("RNG Calls: " + RandomSource.callsSinceSeed());
+        log.println("Seed: " + seed);
+        log.println("Config string: " + Settings.VERSION + "" + settings.toString());
         log.println("------------------------------------------------------------------");
 
         return checkValue;
@@ -648,6 +802,25 @@ public class Randomizer {
                 }
                 romHandler.setStarters(starters);
                 log.println();
+                
+            } else if (settings.getStartersMod() == Settings.StartersMod.RANDOM_WITH_ONE_OR_TWO_EVOLUTIONS) {
+                // Randomise
+                log.println("--Random 1/2-Evolution Starters--");
+                int starterCount = 3;
+                if (romHandler.isYellow()) {
+                    starterCount = 2;
+                }
+                List<Pokemon> starters = new ArrayList<Pokemon>();
+                for (int i = 0; i < starterCount; i++) {
+                    Pokemon pkmn = romHandler.random1or2EvosPokemon();
+                    while (starters.contains(pkmn)) {
+                        pkmn = romHandler.random1or2EvosPokemon();
+                    }
+                    log.println("Set starter " + (i + 1) + " to " + pkmn.name);
+                    starters.add(pkmn);
+                }
+                romHandler.setStarters(starters);
+                log.println();
             } else if (settings.getStartersMod() == Settings.StartersMod.RANDOM_WITH_TWO_EVOLUTIONS) {
                 // Randomise
                 log.println("--Random 2-Evolution Starters--");
@@ -674,13 +847,19 @@ public class Randomizer {
     }
 
     private void maybeLogWildPokemonChanges(final PrintStream log, final RomHandler romHandler) {
-        if (settings.getWildPokemonMod() == Settings.WildPokemonMod.UNCHANGED) {
+        if (settings.getWildPokemonMod() == Settings.WildPokemonMod.UNCHANGED && !settings.isWildLevelModifiedHigh() ) {
             log.println("Wild Pokemon: Unchanged." + NEWLINE);
         } else {
             log.println("--Wild Pokemon--");
             List<EncounterSet> encounters = romHandler.getEncounters(settings.isUseTimeBasedEncounters());
             int idx = 0;
             for (EncounterSet es : encounters) {
+                //skip unused EncounterSets in DPPT
+                if(romHandler instanceof Gen4RomHandler) {
+                    if(es.displayName.contains("? Unknown ?")) {
+                        continue;
+                    }
+                }
                 idx++;
                 log.print("Set #" + idx + " ");
                 if (es.displayName != null) {
@@ -688,10 +867,27 @@ public class Randomizer {
                 }
                 log.print("(rate=" + es.rate + ")");
                 log.print(" - ");
-                boolean first = true;
-                for (Encounter e : es.encounters) {
-                    if (!first) {
+                for (int i = 0; i < es.encounters.size(); i++) {
+                    Encounter e = es.encounters.get(i);
+                    if (i > 0) {
                         log.print(", ");
+                    }
+                    if(romHandler instanceof Gen4RomHandler && es.displayName.contains("Swarm/Radar/GBA")) {
+                        if(i == 0) {
+                            log.print("Swarm: ");
+                        } else if(i == 2) {
+                            log.print("PokeRadar: ");
+                        } else if(i == 6) {
+                            log.print("Ruby GBA: ");
+                        } else if(i == 8) {
+                            log.print("Sapphire GBA: ");
+                        } else if(i == 10) {
+                            log.print("Emerald GBA: ");
+                        } else if(i == 12) {
+                            log.print("Fire Red GBA: ");
+                        } else if(i == 14) {
+                            log.print("Leaf Green GBA: ");
+                        }
                     }
                     log.print(e.pokemon.name + " Lv");
                     if (e.maxLevel > 0 && e.maxLevel != e.level) {
@@ -699,7 +895,6 @@ public class Randomizer {
                     } else {
                         log.print(e.level);
                     }
-                    first = false;
                 }
                 log.println();
             }
@@ -708,7 +903,7 @@ public class Randomizer {
     }
 
     private void maybeLogTrainerChanges(final PrintStream log, final RomHandler romHandler) {
-        if (settings.getTrainersMod() == Settings.TrainersMod.UNCHANGED && !settings.isRivalCarriesStarterThroughout()) {
+        if (settings.getTrainersMod() == Settings.TrainersMod.UNCHANGED && !settings.isRivalCarriesStarterThroughout() && !settings.isTrainersLevelModified()) {
             log.println("Trainers: Unchanged." + NEWLINE);
         } else {
             log.println("--Trainers Pokemon--");
@@ -731,7 +926,7 @@ public class Randomizer {
                     if (!first) {
                         log.print(", ");
                     }
-                    log.print(tpk.pokemon.name + " Lv" + tpk.level);
+                    log.print(tpk.pokemon.name + " Lv" + tpk.level + "(Iv: " + (int)Math.floor((tpk.difficulty*31)/255.0D) + ")");
                     first = false;
                 }
                 log.println();

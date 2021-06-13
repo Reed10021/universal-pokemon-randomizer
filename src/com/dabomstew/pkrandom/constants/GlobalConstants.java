@@ -18,7 +18,7 @@ public class GlobalConstants {
         bannedForDamagingMove[248] = true; // Future Sight
         bannedForDamagingMove[252] = true; // Fake Out
         bannedForDamagingMove[264] = true; // Focus Punch
-        bannedForDamagingMove[353] = true; // Doom Desire
+        //bannedForDamagingMove[353] = true; // Doom Desire
         bannedForDamagingMove[364] = true; // Feint
         bannedForDamagingMove[387] = true; // Last Resort
         bannedForDamagingMove[389] = true; // Sucker Punch

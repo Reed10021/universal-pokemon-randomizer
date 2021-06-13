@@ -250,7 +250,7 @@ public class Gen4Constants {
         tag(trs, 0x106, "ELITE2");
         tag(trs, 0x107, "ELITE3");
         tag(trs, 0x108, "ELITE4");
-        tag(trs, 0x10b, "CHAMPION");
+        tagSpecial(trs, 0x10b, "CHAMPION");
 
         // Rival battles (8)
         tagRivalConsecutive(trs, "RIVAL1", 0xf8);
@@ -306,7 +306,7 @@ public class Gen4Constants {
         tag(trs, 0x106, "ELITE2");
         tag(trs, 0x107, "ELITE3");
         tag(trs, 0x108, "ELITE4");
-        tag(trs, 0x10b, "CHAMPION");
+        tagSpecial(trs, 0x10b, "CHAMPION");
 
         // Rival battles (10)
         tagRivalConsecutive(trs, "RIVAL1", 0x353);
@@ -339,14 +339,14 @@ public class Gen4Constants {
         tag(trs, 0x39A, "ELITE3");
 
         // E4 rematch
-        tag(trs, 0x362, "ELITE1");
-        tag(trs, 0x363, "ELITE2");
-        tag(trs, 0x364, "ELITE3");
-        tag(trs, 0x365, "ELITE4");
-        tag(trs, 0x366, "CHAMPION");
+        tagSpecial(trs, 0x362, "ELITE1");
+        tagSpecial(trs, 0x363, "ELITE2");
+        tagSpecial(trs, 0x364, "ELITE3");
+        tagSpecial(trs, 0x365, "ELITE4");
+        tagSpecial(trs, 0x366, "CHAMPION");
 
         // Themed
-        tag(trs, "THEMED:CYRUS", 0x391, 0x193, 0x194);
+        tagSpecial(trs, "THEMED:CYRUS", 0x391, 0x193, 0x194);
         tag(trs, "THEMED:MARS", 0x127, 0x195, 0x210, 0x39e);
         tag(trs, "THEMED:JUPITER", 0x196, 0x197, 0x39f);
         tag(trs, "THEMED:SATURN", 0x198, 0x199);
@@ -405,7 +405,7 @@ public class Gen4Constants {
         tag(trs, 0xf4, "CHAMPION");
 
         // Red
-        tag(trs, 0x104, "UBER");
+        tagSpecial(trs, 0x104, "UBER");
 
         // Gym Rematches
         tag(trs, 0x2c8, "GYM1");
@@ -472,9 +472,21 @@ public class Gen4Constants {
         allTrainers.get(number - 1).tag = tag;
     }
 
+    private static void tagSpecial(List<Trainer> allTrainers, int number, String tag) {
+        allTrainers.get(number - 1).tag = tag;
+        allTrainers.get(number - 1).importantTrainer = true;
+    }
+
     private static void tag(List<Trainer> allTrainers, String tag, int... numbers) {
         for (int num : numbers) {
             allTrainers.get(num - 1).tag = tag;
+        }
+    }
+
+    private static void tagSpecial(List<Trainer> allTrainers, String tag, int... numbers) {
+        for (int num : numbers) {
+            allTrainers.get(num - 1).tag = tag;
+            allTrainers.get(num - 1).importantTrainer = true;
         }
     }
 
