@@ -213,9 +213,10 @@ public class Randomizer {
 
             // Only output evolutions to workbook once. So if we're not done making changes, don't log it.
             if(settings.isChangeImpossibleEvolutions() || settings.isMakeEvolutionsEasier()) {
-                logRandomizedEvolutions(null, log, romHandler);
+                logRandomizedEvolutions(log, romHandler);
             } else {
-                logRandomizedEvolutions(wb, log, romHandler);
+                logRandomizedEvolutions(log, romHandler);
+                logToWorkbookRandomizedEvolutions(wb, romHandler);
             }
         }
 
@@ -236,11 +237,17 @@ public class Randomizer {
 
         // Starter Pokemon
         // Applied after type to update the strings correctly based on new types
+        List<Pokemon> oldStarters = romHandler.getStarters();
         maybeChangeAndLogStarters(log, romHandler);
+        // If starters changed, log it to the workbook
+        if(!oldStarters.containsAll(romHandler.getStarters())) {
+            logToWorkbookStarters(wb, romHandler, oldStarters);
+        }
 
         // Move Data Log
         // Placed here so it matches its position in the randomizer interface
         maybeLogMoveChanges(log, romHandler);
+        maybeLogToWorkbookMoveChanges(wb, romHandler);
 
         // Movesets
         boolean noBrokenMoves = settings.doBlockBrokenMoves();
@@ -267,92 +274,6 @@ public class Randomizer {
 
         if (settings.isReorderDamagingMoves()) {
             romHandler.orderDamagingMovesByDamage();
-        }
-
-        // Show the new movesets if applicable
-        if (settings.getMovesetsMod() == Settings.MovesetsMod.UNCHANGED) {
-            if(!settings.doBlockBrokenMoves() && !forceFourLv1s ) {
-                log.println("Pokemon Movesets: Unchanged." + NEWLINE);
-            }
-            else
-            {
-                if (settings.doBlockBrokenMoves()) {
-                    log.print("Pokemon Movesets: Removed Game-Breaking Moves (");
-                    List<Integer> gameBreakingMoves = romHandler.getGameBreakingMoves();
-                    int numberPrinted = 0;
-                    for (Move move : moves) {
-                        if (move == null) {
-                            continue;
-                        }
-                        if (gameBreakingMoves.contains(move.number)) {
-                            numberPrinted++;
-                            log.print(move.name);
-                            if (numberPrinted < gameBreakingMoves.size()) {
-                                log.print(", ");
-                            }
-                        }
-                    }
-                    log.println(")" + NEWLINE);
-                }
-                
-                if( forceFourLv1s ) {
-                    log.println("--Pokemon Movesets--");
-                    List<String> movesets = new ArrayList<String>();
-                    Map<Pokemon, List<MoveLearnt>> moveData = romHandler.getMovesLearnt();
-                    for (Pokemon pkmn : moveData.keySet()) {
-                        StringBuilder sb = new StringBuilder();
-                        sb.append(String.format("%03d %-10s : ", pkmn.number, pkmn.name));
-                        List<MoveLearnt> data = moveData.get(pkmn);
-                        boolean first = true;
-                        for (MoveLearnt ml : data) {
-                            if (!first) {
-                                sb.append(", ");
-                            }
-                            try {
-                                sb.append(moves.get(ml.move).name).append(" at level ").append(ml.level);
-                            } catch (NullPointerException ex) {
-                                sb.append("invalid move at level" + ml.level);
-                            }
-                            first = false;
-                        }
-                        movesets.add(sb.toString());
-                    }
-                    Collections.sort(movesets);
-                    for (String moveset : movesets) {
-                        log.println(moveset);
-                    }
-                    log.println();
-                }
-            }
-        } else if (settings.getMovesetsMod() == Settings.MovesetsMod.METRONOME_ONLY) {
-            log.println("Pokemon Movesets: Metronome Only." + NEWLINE);
-        } else {
-            log.println("--Pokemon Movesets--");
-            List<String> movesets = new ArrayList<String>();
-            Map<Pokemon, List<MoveLearnt>> moveData = romHandler.getMovesLearnt();
-            for (Pokemon pkmn : moveData.keySet()) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(String.format("%03d %-10s : ", pkmn.number, pkmn.name));
-                List<MoveLearnt> data = moveData.get(pkmn);
-                boolean first = true;
-                for (MoveLearnt ml : data) {
-                    if (!first) {
-                        sb.append(", ");
-                    }
-                    try {
-                        sb.append(moves.get(ml.move).name).append(" at level ").append(ml.level);
-                    } catch (NullPointerException ex) {
-                        sb.append("invalid move at level" + ml.level);
-                    }
-                    first = false;
-                }
-                movesets.add(sb.toString());
-            }
-            Collections.sort(movesets);
-            for (String moveset : movesets) {
-                log.println(moveset);
-            }
-            log.println();
         }
 
         // Trainer Pokemon
@@ -394,8 +315,6 @@ public class Randomizer {
             }
         }
 
-        maybeLogTrainerChanges(log, romHandler);
-
         // Apply metronome only mode now that trainers have been dealt with
         if (settings.getMovesetsMod() == Settings.MovesetsMod.METRONOME_ONLY) {
             romHandler.metronomeOnlyMode();
@@ -408,8 +327,17 @@ public class Randomizer {
             }
         }
 
+        maybeLogMovesetChanges(log, romHandler, forceFourLv1s);
+        maybeLogToWorkbookMovesetChanges(wb, romHandler, forceFourLv1s);
+        maybeLogTrainerChanges(log, romHandler);
+        maybeLogToWorkbookTrainerChanges(wb,romHandler);
+
         // Static Pokemon
+        List<Pokemon> oldStatics = romHandler.getStaticPokemon();
         checkValue = maybeChangeAndLogStaticPokemon(log, romHandler, raceMode, checkValue);
+        if(!oldStatics.containsAll(romHandler.getStaticPokemon())) {
+            logToWorkbookStaticPokemon(wb, romHandler, oldStatics);
+        }
 
         // Wild Pokemon
         if (settings.isUseMinimumCatchRate()) {
@@ -480,6 +408,8 @@ public class Randomizer {
         }
 
         maybeLogWildPokemonChanges(log, romHandler);
+        maybeLogToWorkbookWildPokemonChanges(wb, romHandler);
+
         List<EncounterSet> encounters = romHandler.getEncounters(settings.isUseTimeBasedEncounters());
         for (EncounterSet es : encounters) {
             for (Encounter e : es.encounters) {
@@ -692,6 +622,8 @@ public class Randomizer {
 
         return checkValue;
     }
+
+
 
     private void maybeLogBaseStatAndTypeChanges(final Workbook wb, final PrintStream log, final RomHandler romHandler) {
         List<Pokemon> allPokes = romHandler.getPokemon();
@@ -942,7 +874,7 @@ public class Randomizer {
         }
     }
 
-    private void logRandomizedEvolutions(Workbook wb, PrintStream log, RomHandler romHandler) {
+    private void logRandomizedEvolutions(PrintStream log, RomHandler romHandler) {
         log.println("--Randomized Evolutions--");
         List<Pokemon> allPokes = romHandler.getPokemon();
         for (Pokemon pk : allPokes) {
@@ -962,9 +894,6 @@ public class Randomizer {
             }
         }
         log.println();
-        if(wb != null) {
-            logToWorkbookRandomizedEvolutions(wb, romHandler);
-       }
     }
 
     private void logToWorkbookRandomizedEvolutions(Workbook wb, RomHandler romHandler) {
@@ -1105,6 +1034,175 @@ public class Randomizer {
         }
     }
 
+    private void logToWorkbookStarters(Workbook wb, RomHandler romHandler, List<Pokemon> oldStarters) {
+        List<Pokemon> newStarters = romHandler.getStarters();
+        int rowCounter = 0;
+        int cellCounter = 0;
+        Sheet starters = wb.getSheetAt(2);
+        starters.createFreezePane(0,1);
+        Row rowOne = starters.createRow(rowCounter++);
+
+        rowOne.createCell(cellCounter++).setCellValue("STARTERS");
+        rowOne.createCell(cellCounter++);
+        rowOne.createCell(cellCounter++);
+        starters.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+        CellStyle centerCells = wb.createCellStyle();
+        centerCells.setAlignment(HorizontalAlignment.CENTER);
+        rowOne.getCell(0).setCellStyle(centerCells);
+
+        int oldStarterIndex = 0;
+        for(Pokemon starter : newStarters) {
+            int tempCellCounter = 0;
+            Row tempRow = starters.createRow(rowCounter++);
+            tempRow.createCell(tempCellCounter++).setCellValue(oldStarters.get(oldStarterIndex).name);
+            tempRow.createCell(tempCellCounter++).setCellValue("changed to");
+            tempRow.createCell(tempCellCounter).setCellValue(starter.name);
+
+            oldStarterIndex++;
+        }
+        for (int i = 0; i < cellCounter; i++) {
+            starters.autoSizeColumn(i);
+        }
+    }
+
+    private void maybeLogMovesetChanges(PrintStream log, RomHandler romHandler, boolean forceFourLv1s) {
+        // Show the new movesets if applicable
+        List<Move> moves = romHandler.getMoves();
+        if (settings.getMovesetsMod() == Settings.MovesetsMod.UNCHANGED) {
+            if(!settings.doBlockBrokenMoves() && !forceFourLv1s ) {
+                log.println("Pokemon Movesets: Unchanged." + NEWLINE);
+            }
+            else
+            {
+                if (settings.doBlockBrokenMoves()) {
+                    log.print("Pokemon Movesets: Removed Game-Breaking Moves (");
+                    List<Integer> gameBreakingMoves = romHandler.getGameBreakingMoves();
+                    int numberPrinted = 0;
+                    for (Move move : moves) {
+                        if (move == null) {
+                            continue;
+                        }
+                        if (gameBreakingMoves.contains(move.number)) {
+                            numberPrinted++;
+                            log.print(move.name);
+                            if (numberPrinted < gameBreakingMoves.size()) {
+                                log.print(", ");
+                            }
+                        }
+                    }
+                    log.println(")" + NEWLINE);
+                }
+
+                if( forceFourLv1s ) {
+                    log.println("--Pokemon Movesets--");
+                    List<String> movesets = new ArrayList<String>();
+                    Map<Pokemon, List<MoveLearnt>> moveData = romHandler.getMovesLearnt();
+                    for (Pokemon pkmn : moveData.keySet()) {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(String.format("%03d %-10s : ", pkmn.number, pkmn.name));
+                        List<MoveLearnt> data = moveData.get(pkmn);
+                        boolean first = true;
+                        for (MoveLearnt ml : data) {
+                            if (!first) {
+                                sb.append(", ");
+                            }
+                            try {
+                                sb.append(moves.get(ml.move).name).append(" at level ").append(ml.level);
+                            } catch (NullPointerException ex) {
+                                sb.append("invalid move at level" + ml.level);
+                            }
+                            first = false;
+                        }
+                        movesets.add(sb.toString());
+                    }
+                    Collections.sort(movesets);
+                    for (String moveset : movesets) {
+                        log.println(moveset);
+                    }
+                    log.println();
+                }
+            }
+        } else if (settings.getMovesetsMod() == Settings.MovesetsMod.METRONOME_ONLY) {
+            log.println("Pokemon Movesets: Metronome Only." + NEWLINE);
+        } else {
+            log.println("--Pokemon Movesets--");
+            List<String> movesets = new ArrayList<String>();
+            Map<Pokemon, List<MoveLearnt>> moveData = romHandler.getMovesLearnt();
+            for (Pokemon pkmn : moveData.keySet()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("%03d %-10s : ", pkmn.number, pkmn.name));
+                List<MoveLearnt> data = moveData.get(pkmn);
+                boolean first = true;
+                for (MoveLearnt ml : data) {
+                    if (!first) {
+                        sb.append(", ");
+                    }
+                    try {
+                        sb.append(moves.get(ml.move).name).append(" at level ").append(ml.level);
+                    } catch (NullPointerException ex) {
+                        sb.append("invalid move at level" + ml.level);
+                    }
+                    first = false;
+                }
+                movesets.add(sb.toString());
+            }
+            Collections.sort(movesets);
+            for (String moveset : movesets) {
+                log.println(moveset);
+            }
+            log.println();
+        }
+    }
+
+    private void maybeLogToWorkbookMovesetChanges(Workbook wb, RomHandler romHandler, boolean forceFourLv1s) {
+        if (settings.getMovesetsMod() != Settings.MovesetsMod.UNCHANGED || settings.doBlockBrokenMoves() || forceFourLv1s) {
+            List<Move> moves = romHandler.getMoves();
+            List<String> movesets = new ArrayList<String>();
+            Map<Pokemon, List<MoveLearnt>> moveData = romHandler.getMovesLearnt();
+            int cellCounter = 0;
+            int rowCounter = 0;
+            Sheet sheetMoveset = wb.getSheetAt(4);
+            sheetMoveset.createFreezePane(2,0);
+            Row rowOne = sheetMoveset.createRow(rowCounter++);
+            rowOne.createCell(cellCounter++).setCellValue("NUM");
+            rowOne.createCell(cellCounter++).setCellValue("NAME");
+
+            CellStyle centerCells = wb.createCellStyle();
+            centerCells.setAlignment(HorizontalAlignment.CENTER);
+            for(int i = 0; i < cellCounter; i++) {
+                rowOne.getCell(i).setCellStyle(centerCells);
+            }
+
+            for (Pokemon pkmn : moveData.keySet()) {
+                int tempCellCounter = 0;
+                Row tempRow = sheetMoveset.createRow(rowCounter++);
+                tempRow.createCell(tempCellCounter++).setCellValue(pkmn.number);
+                tempRow.createCell(tempCellCounter++).setCellValue(pkmn.name);
+
+                List<MoveLearnt> data = moveData.get(pkmn);
+                for (MoveLearnt ml : data) {
+                    if(ml != null && moves.get(ml.move) != null) {
+                        tempRow.createCell(tempCellCounter++).setCellValue(moves.get(ml.move).name + " at level " + ml.level);
+                    } else {
+                        if(ml != null) {
+                            System.out.println("BAD MOVE ALERT: " + ml.move + " LV: " + ml.level + " FOR PKMN " + pkmn.name);
+                        } else {
+                            System.out.println("BAD MOVE ALERT: NULLPTR FOR PKMN " + pkmn.name);
+                        }
+                    }
+                }
+
+                if(tempCellCounter > cellCounter) {
+                    cellCounter = tempCellCounter;
+                }
+            }
+
+            for (int i = 0; i < cellCounter; i++) {
+                sheetMoveset.autoSizeColumn(i);
+            }
+        }
+    }
+
     private void maybeLogWildPokemonChanges(final PrintStream log, final RomHandler romHandler) {
         if (settings.getWildPokemonMod() == Settings.WildPokemonMod.UNCHANGED && !settings.isWildLevelModifiedHigh() ) {
             log.println("Wild Pokemon: Unchanged." + NEWLINE);
@@ -1161,6 +1259,126 @@ public class Randomizer {
         }
     }
 
+    private void maybeLogToWorkbookWildPokemonChanges(Workbook wb, RomHandler romHandler) {
+        if(settings.getWildPokemonMod() != Settings.WildPokemonMod.UNCHANGED || settings.isWildLevelModifiedHigh()) {
+            int rowCounter = 0;
+            int cellCounter = 0;
+            Sheet sheetTrainers = wb.getSheetAt(7);
+            sheetTrainers.createFreezePane(2,0);
+            Row rowOne = sheetTrainers.createRow(rowCounter++);
+            rowOne.createCell(cellCounter++).setCellValue("NUM");
+            rowOne.createCell(cellCounter++).setCellValue("LOCATION");
+
+            CellStyle centerCells = wb.createCellStyle();
+            centerCells.setAlignment(HorizontalAlignment.CENTER);
+            for(int i = 0; i < cellCounter; i++) {
+                rowOne.getCell(i).setCellStyle(centerCells);
+            }
+
+            List<EncounterSet> encounters = romHandler.getEncounters(settings.isUseTimeBasedEncounters());
+            int idx = 0;
+            for (EncounterSet es : encounters) {
+                //skip unused EncounterSets in DPPT
+                if(romHandler instanceof Gen4RomHandler) {
+                    if(es.displayName.contains("? Unknown ?")) {
+                        continue;
+                    } else if(es.displayName.contains("Swarm/Radar/GBA")) {
+                        // Skip swarm stuff until the end.
+                        continue;
+                    }
+                }
+                idx++;
+                int tempCellCounter = 0;
+                Row tempRow = sheetTrainers.createRow(rowCounter++);
+                tempRow.createCell(tempCellCounter++).setCellValue("Set " + idx + " (Rate: " + es.rate + ")");
+                if (es.displayName != null) {
+                    tempRow.createCell(tempCellCounter++).setCellValue(es.displayName);
+                }
+
+                for (int i = 0; i < es.encounters.size(); i++) {
+                    Encounter e = es.encounters.get(i);
+                    String pkmnStr = e.pokemon.name + " Lv";
+                    if (e.maxLevel > 0 && e.maxLevel != e.level) {
+                        pkmnStr += "s " + e.level + "-" + e.maxLevel;
+                    } else {
+                        pkmnStr+= e.level;
+                    }
+                    tempRow.createCell(tempCellCounter++).setCellValue(pkmnStr);
+                    if(tempCellCounter > cellCounter) {
+                        cellCounter = tempCellCounter;
+                    }
+                }
+            }
+
+            // Now do swarm stuff.
+            if(romHandler instanceof Gen4RomHandler) {
+                for (EncounterSet es : encounters) {
+                    //skip unused EncounterSets in DPPT
+                    if (es.displayName.contains("? Unknown ?")) {
+                        continue;
+                    } else if (!es.displayName.contains("Swarm/Radar/GBA")) {
+                        continue;
+                    }
+                    idx++;
+                    int tempCellCounter = 0;
+                    Row tempRow = sheetTrainers.createRow(rowCounter++);
+                    tempRow.createCell(tempCellCounter++).setCellValue("Set " + idx + " (Rate: " + es.rate + ")");
+                    if (es.displayName != null) {
+                        tempRow.createCell(tempCellCounter++).setCellValue(es.displayName.replace("Swarm/Radar/GBA", "Swarm"));
+                    }
+
+                    for (int i = 0; i < es.encounters.size(); i++) {
+                        if (es.displayName.contains("Swarm/Radar/GBA")) {
+                            // i == 0 is Swarm; already taken care of.
+                            if (i == 2) {
+                                tempCellCounter = 0;
+                                tempRow = sheetTrainers.createRow(rowCounter++);
+                                tempRow.createCell(tempCellCounter++).setCellValue("Set " + idx + " (Rate: " + es.rate + ")");
+                                tempRow.createCell(tempCellCounter++).setCellValue(es.displayName.replace("Swarm/Radar/GBA", "PokeRadar"));
+                            } else if (i == 6) {
+                                tempCellCounter = 0;
+                                tempRow = sheetTrainers.createRow(rowCounter++);
+                                tempRow.createCell(tempCellCounter++).setCellValue("Set " + idx + " (Rate: " + es.rate + ")");
+                                tempRow.createCell(tempCellCounter++).setCellValue(es.displayName.replace("Swarm/Radar/GBA", "Ruby GBA"));
+                            } else if (i == 8) {
+                                tempCellCounter = 0;
+                                tempRow = sheetTrainers.createRow(rowCounter++);
+                                tempRow.createCell(tempCellCounter++).setCellValue("Set " + idx + " (Rate: " + es.rate + ")");
+                                tempRow.createCell(tempCellCounter++).setCellValue(es.displayName.replace("Swarm/Radar/GBA", "Sapphire GBA"));
+                            } else if (i == 10) {
+                                tempCellCounter = 0;
+                                tempRow = sheetTrainers.createRow(rowCounter++);
+                                tempRow.createCell(tempCellCounter++).setCellValue("Set " + idx + " (Rate: " + es.rate + ")");
+                                tempRow.createCell(tempCellCounter++).setCellValue(es.displayName.replace("Swarm/Radar/GBA", "Emerald GBA"));
+                            } else if (i == 12) {
+                                tempCellCounter = 0;
+                                tempRow = sheetTrainers.createRow(rowCounter++);
+                                tempRow.createCell(tempCellCounter++).setCellValue("Set " + idx + " (Rate: " + es.rate + ")");
+                                tempRow.createCell(tempCellCounter++).setCellValue(es.displayName.replace("Swarm/Radar/GBA", "Fire Red GBA"));
+                            } else if (i == 14) {
+                                tempCellCounter = 0;
+                                tempRow = sheetTrainers.createRow(rowCounter++);
+                                tempRow.createCell(tempCellCounter++).setCellValue("Set " + idx + " (Rate: " + es.rate + ")");
+                                tempRow.createCell(tempCellCounter++).setCellValue(es.displayName.replace("Swarm/Radar/GBA", "Leaf Green GBA"));
+                            }
+                        }
+                        Encounter e = es.encounters.get(i);
+                        String pkmnStr = e.pokemon.name + " Lv";
+                        if (e.maxLevel > 0 && e.maxLevel != e.level) {
+                            pkmnStr += "s " + e.level + "-" + e.maxLevel;
+                        } else {
+                            pkmnStr += e.level;
+                        }
+                        tempRow.createCell(tempCellCounter++).setCellValue(pkmnStr);
+                    }
+                }
+            }
+            for (int i = 0; i < cellCounter; i++) {
+                sheetTrainers.autoSizeColumn(i);
+            }
+        }
+    }
+
     private void maybeLogTrainerChanges(final PrintStream log, final RomHandler romHandler) {
         if (settings.getTrainersMod() == Settings.TrainersMod.UNCHANGED && !settings.isRivalCarriesStarterThroughout() && !settings.isTrainersLevelModified()) {
             log.println("Trainers: Unchanged." + NEWLINE);
@@ -1191,6 +1409,60 @@ public class Randomizer {
                 log.println();
             }
             log.println();
+        }
+    }
+
+    private void maybeLogToWorkbookTrainerChanges(Workbook wb, RomHandler romHandler) {
+        if(settings.getTrainersMod() != Settings.TrainersMod.UNCHANGED
+                || settings.isRivalCarriesStarterThroughout()
+                || settings.isTrainersLevelModified()) {
+
+            List<Trainer> trainers = romHandler.getTrainers();
+            int rowCounter = 0;
+            int cellCounter = 0;
+            Sheet sheetTrainers = wb.getSheetAt(8);
+            sheetTrainers.createFreezePane(2,1);
+            Row rowOne = sheetTrainers.createRow(rowCounter++);
+            rowOne.createCell(cellCounter++).setCellValue("NUM");
+            rowOne.createCell(cellCounter++).setCellValue("NAME");
+            rowOne.createCell(cellCounter++).setCellValue("PKMN 1");
+            rowOne.createCell(cellCounter++).setCellValue("PKMN 2");
+            rowOne.createCell(cellCounter++).setCellValue("PKMN 3");
+            rowOne.createCell(cellCounter++).setCellValue("PKMN 4");
+            rowOne.createCell(cellCounter++).setCellValue("PKMN 5");
+            rowOne.createCell(cellCounter++).setCellValue("PKMN 6");
+
+            CellStyle centerCells = wb.createCellStyle();
+            centerCells.setAlignment(HorizontalAlignment.CENTER);
+            for(int i = 0; i < cellCounter; i++) {
+                rowOne.getCell(i).setCellStyle(centerCells);
+            }
+
+            int idx = 0;
+            for (Trainer t : trainers) {
+                idx++;
+                int tempCellCounter = 0;
+                Row tempRow = sheetTrainers.createRow(rowCounter++);
+                tempRow.createCell(tempCellCounter++).setCellValue(idx);
+                String name = "";
+                if (t.fullDisplayName != null) {
+                    name += t.fullDisplayName;
+                } else if (t.name != null) {
+                    name += t.name;
+                }
+                if (t.offset != idx && t.offset != 0) {
+                    name += " - " + String.format("@%X", t.offset);
+                }
+
+                tempRow.createCell(tempCellCounter++).setCellValue(name);
+
+                for (TrainerPokemon tpk : t.pokemon) {
+                    tempRow.createCell(tempCellCounter++).setCellValue(tpk.pokemon.name + " Lv" + tpk.level + " (IVS: " + (int)Math.floor((tpk.difficulty*31)/255.0D) + ")");
+                }
+            }
+            for (int i = 0; i < cellCounter; i++) {
+                sheetTrainers.autoSizeColumn(i);
+            }
         }
     }
 
@@ -1229,6 +1501,62 @@ public class Randomizer {
         return checkValue;
     }
 
+    private void logToWorkbookStaticPokemon(Workbook wb, RomHandler romHandler, List<Pokemon> oldStatics) {
+        int rowCounter = 0;
+        int cellCounter = 0;
+        Sheet sheetStatics = wb.getSheetAt(2);
+        Row rowOne = sheetStatics.getRow(0);
+        boolean doesRowOneExist = false;
+        if(rowOne == null) {
+            // rowOne is null, which means starters haven't been added.
+            sheetStatics.createFreezePane(0,1);
+            rowOne = sheetStatics.createRow(rowCounter++);
+        } else {
+            // rowOne is not null, starters have been added. Work from there.
+            rowCounter++;
+            cellCounter = 3;
+            doesRowOneExist = true;
+        }
+        rowOne.createCell(cellCounter++);
+        rowOne.createCell(cellCounter++).setCellValue("OLD");
+        rowOne.createCell(cellCounter++).setCellValue("TO");
+        rowOne.createCell(cellCounter++).setCellValue("NEW");
+
+        CellStyle centerCells = wb.createCellStyle();
+        centerCells.setAlignment(HorizontalAlignment.CENTER);
+        for(int i = 0; i < cellCounter; i++) {
+            rowOne.getCell(i).setCellStyle(centerCells);
+        }
+
+        List<Pokemon> newStatics = romHandler.getStaticPokemon();
+        Map<Pokemon, Integer> seenPokemon = new TreeMap<Pokemon, Integer>();
+        for (int i = 0; i < oldStatics.size(); i++) {
+            Pokemon oldP = oldStatics.get(i);
+            Pokemon newP = newStatics.get(i);
+            int tempCellCounter = doesRowOneExist ? 3 : 0;
+            Row tempRow = sheetStatics.getRow(rowCounter);
+            if(tempRow == null) {
+                tempRow = sheetStatics.createRow(rowCounter);
+            }
+            rowCounter++;
+            tempRow.createCell(tempCellCounter++);
+
+            if (seenPokemon.containsKey(oldP)) {
+                int amount = seenPokemon.get(oldP);
+                seenPokemon.put(oldP, amount);
+                tempRow.createCell(tempCellCounter++).setCellValue(oldP.name + " (" + (++amount) + ")");
+            } else {
+                seenPokemon.put(oldP, 1);
+                tempRow.createCell(tempCellCounter++).setCellValue(oldP.name);
+            }
+            tempRow.createCell(tempCellCounter++).setCellValue("=>");
+            tempRow.createCell(tempCellCounter).setCellValue(newP.name);
+        }
+        for (int i = 0; i < cellCounter; i++) {
+            sheetStatics.autoSizeColumn(i);
+        }
+    }
+
     private void maybeLogMoveChanges(final PrintStream log, final RomHandler romHandler) {
         if (!settings.isRandomizeMoveAccuracies() && !settings.isRandomizeMovePowers()
                 && !settings.isRandomizeMovePPs() && !settings.isRandomizeMoveCategory()
@@ -1256,6 +1584,52 @@ public class Randomizer {
                 }
             }
             log.println();
+        }
+    }
+
+    private void maybeLogToWorkbookMoveChanges(Workbook wb, RomHandler romHandler) {
+        if (settings.isRandomizeMoveAccuracies() || settings.isRandomizeMovePowers() || settings.isRandomizeMovePPs()
+                || settings.isRandomizeMoveCategory() || settings.isRandomizeMoveTypes() || settings.isUpdateMoves()) {
+            int rowCounter = 0;
+            int cellCounter = 0;
+            Sheet moveSheet = wb.getSheetAt(3);
+            moveSheet.createFreezePane(0,1);
+            Row rowOne = moveSheet.createRow(rowCounter++);
+            rowOne.createCell(cellCounter++).setCellValue("NUM");
+            rowOne.createCell(cellCounter++).setCellValue("NAME");
+            rowOne.createCell(cellCounter++).setCellValue("TYPE");
+            rowOne.createCell(cellCounter++).setCellValue("POWER");
+            rowOne.createCell(cellCounter++).setCellValue("ACCURACY");
+            rowOne.createCell(cellCounter++).setCellValue("PP");
+            if(romHandler.hasPhysicalSpecialSplit()) {
+                rowOne.createCell(cellCounter++).setCellValue("CATEGORY");
+            }
+            CellStyle centerCells = wb.createCellStyle();
+            centerCells.setAlignment(HorizontalAlignment.CENTER);
+            for(int i = 0; i < cellCounter; i++) {
+                rowOne.getCell(i).setCellStyle(centerCells);
+            }
+            List<Move> allMoves = romHandler.getMoves();
+            for (Move mv : allMoves) {
+                if (mv != null) {
+                    int tempCellCounter = 0;
+                    Row tempRow = moveSheet.createRow(rowCounter++);
+                    String mvType = (mv.type == null) ? "???" : mv.type.toString();
+
+                    tempRow.createCell(tempCellCounter++).setCellValue(mv.internalId);
+                    tempRow.createCell(tempCellCounter++).setCellValue(mv.name);
+                    tempRow.createCell(tempCellCounter++).setCellValue(mvType);
+                    tempRow.createCell(tempCellCounter++).setCellValue(mv.power);
+                    tempRow.createCell(tempCellCounter++).setCellValue((int)mv.hitratio);
+                    tempRow.createCell(tempCellCounter++).setCellValue(mv.pp);
+                    if (romHandler.hasPhysicalSpecialSplit()) {
+                        tempRow.createCell(tempCellCounter).setCellValue(mv.category.toString());
+                    }
+                }
+            }
+            for (int i = 0; i < cellCounter; i++) {
+                moveSheet.autoSizeColumn(i);
+            }
         }
     }
 

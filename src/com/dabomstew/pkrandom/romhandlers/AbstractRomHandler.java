@@ -1271,6 +1271,7 @@ public abstract class AbstractRomHandler implements RomHandler {
             int levelModifier, int minDifficulty) {
         checkPokemonRestrictions();
         List<Trainer> currentTrainers = this.getTrainers();
+        List<Trainer> removedTrainers = new ArrayList<>();
 
         // New: randomize the order trainers are randomized in.
         // Leads to less predictable results for various modifiers.
@@ -1281,6 +1282,13 @@ public abstract class AbstractRomHandler implements RomHandler {
         cachedReplacementLists = new TreeMap<Type, List<Pokemon>>();
         cachedAllList = noLegendaries ? new ArrayList<Pokemon>(noLegendaryList) : new ArrayList<Pokemon>(
                 mainPokemonList);
+
+        for(Trainer t : currentTrainers) {
+            if (t.tag != null && t.tag.equals("DONT_RANDOMIZE")) {
+                removedTrainers.add(t);
+            }
+        }
+        currentTrainers.removeIf(t -> t.tag != null && t.tag.equals("DONT_RANDOMIZE"));
 
         // Fully random is easy enough - randomize then worry about rival
         // carrying starter at the end
@@ -1300,7 +1308,7 @@ public abstract class AbstractRomHandler implements RomHandler {
                 }
             }
         }
-
+        currentTrainers.addAll(removedTrainers);
         // Save it all up
         this.setTrainers(currentTrainers);
     }
