@@ -30,14 +30,7 @@ import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.LayoutManager;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -68,14 +61,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.xml.bind.DatatypeConverter;
 
-import com.dabomstew.pkrandom.CustomNamesSet;
-import com.dabomstew.pkrandom.FileFunctions;
-import com.dabomstew.pkrandom.MiscTweak;
-import com.dabomstew.pkrandom.RandomSource;
-import com.dabomstew.pkrandom.Randomizer;
-import com.dabomstew.pkrandom.Settings;
-import com.dabomstew.pkrandom.SysConstants;
-import com.dabomstew.pkrandom.Utils;
+import com.dabomstew.pkrandom.*;
 import com.dabomstew.pkrandom.exceptions.InvalidSupplementFilesException;
 import com.dabomstew.pkrandom.exceptions.RandomizationException;
 import com.dabomstew.pkrandom.pokemon.GenRestrictions;
@@ -2100,6 +2086,7 @@ public class RandomizerGUI extends javax.swing.JFrame {
         try {
             final AtomicInteger finishedCV = new AtomicInteger(0);
             opDialog = new OperationDialog(bundle.getString("RandomizerGUI.savingText"), this, true);
+            WorkbookHandler wbh = new WorkbookHandler();
             Thread t = new Thread() {
                 @Override
                 public void run() {
@@ -2113,7 +2100,7 @@ public class RandomizerGUI extends javax.swing.JFrame {
                     try {
                         RandomizerGUI.this.romHandler.setLog(verboseLog);
                         finishedCV.set(new Randomizer(settings, RandomizerGUI.this.romHandler).randomize(filename,
-                                verboseLog, seed));
+                                verboseLog, wbh, seed));
                         succeededSave = true;
                     } catch (RandomizationException ex) {
                         attemptToLogException(ex, "RandomizerGUI.saveFailedMessage",
@@ -2147,6 +2134,12 @@ public class RandomizerGUI extends javax.swing.JFrame {
                                             JOptionPane.YES_NO_OPTION);
                                     if (response == JOptionPane.YES_OPTION) {
                                         try {
+                                            try(OutputStream fileOut = new FileOutputStream(filename+".xlsx")) {
+                                                wbh.getWorkbook().write(fileOut);
+                                            } catch (IOException e) {
+                                                e.printStackTrace();
+                                            }
+
                                             FileOutputStream fos = new FileOutputStream(filename + ".log");
                                             fos.write(0xEF);
                                             fos.write(0xBB);

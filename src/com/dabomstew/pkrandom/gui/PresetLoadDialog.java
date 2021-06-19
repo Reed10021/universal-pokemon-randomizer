@@ -118,7 +118,7 @@ public class PresetLoadDialog extends javax.swing.JDialog {
     protected boolean checkValues() {
         String name;
         try {
-            Long.parseLong(this.randomSeedField.getText());
+            Long.parseLong(this.randomSeedField.getText().trim());
         } catch (NumberFormatException ex) {
             invalidValues();
             return false;
@@ -245,7 +245,7 @@ public class PresetLoadDialog extends javax.swing.JDialog {
     }
 
     public long getSeed() {
-        return Long.parseLong(this.randomSeedField.getText());
+        return Long.parseLong(this.randomSeedField.getText().trim());
     }
 
     public String getConfigString() {

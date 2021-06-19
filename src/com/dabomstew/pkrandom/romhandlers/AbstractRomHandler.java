@@ -169,17 +169,13 @@ public abstract class AbstractRomHandler implements RomHandler {
                                           List<Integer> currentItems, List<Integer> currentTMs )
     {
         String[] itemNames = this.getItemNames();
-        if( mode == 0 )
-        {
+        if( mode == 0 ) {
             log("--Shuffled Items--");
-        }
-        else
-        {
+        } else {
             log("--Randomized Items--");
         }
         
-        for (int i = 0; i < currentItems.size(); i++) 
-        {
+        for (int i = 0; i < currentItems.size(); i++) {
             // Prevent randomizing the legendary Orbs in the 4th gen.
             if(generationOfPokemon() == 4) {
                 if(itemNames[oldItems.get(i)].equals("Adamant Orb")
@@ -194,72 +190,48 @@ public abstract class AbstractRomHandler implements RomHandler {
         
         logBlankLine();
         
-        if( mode == 0 )
-        {
+        if( mode == 0 ) {
             log("--Shuffled TMs--");
-        }
-        else
-        {
+        } else {
             log("--Randomized TMs--");
         }
         
         int tmIndex = 0;
-        if( generationOfPokemon() == 1 )
-        {
+        if( generationOfPokemon() == 1 ) {
             tmIndex = Gen1Constants.tmsStartIndex - 1;
-        }
-        else if( generationOfPokemon() == 3 )
-        {
+        } else if( generationOfPokemon() == 3 ) {
             tmIndex = Gen3Constants.tmItemOffset - 1;
-        }
-        else if( generationOfPokemon() == 4 )
-        {
+        } else if( generationOfPokemon() == 4 ) {
             tmIndex = Gen4Constants.tmItemOffset - 1;
         }
         
-        if( tmIndex != 0 )
-        {
-            for(int i = 0; i < currentTMs.size(); i++) 
-            {
+        if( tmIndex != 0 ) {
+            for(int i = 0; i < currentTMs.size(); i++) {
                 System.out.println(String.format("%s => %s", itemNames[oldTMs.get(i) + tmIndex], itemNames[currentTMs.get(i)+ tmIndex]));
                 log(String.format("%s => %s", itemNames[oldTMs.get(i) + tmIndex], itemNames[currentTMs.get(i) + tmIndex]));
             }
-        }
-        else
-        {
-            if( generationOfPokemon() == 2 )
-            {
-                for(int i = 0; i < currentTMs.size(); i++) 
-                {
+        } else {
+            if( generationOfPokemon() == 2 ) {
+                for(int i = 0; i < currentTMs.size(); i++) {
                     int oldTmID = oldTMs.get(i);
                     int newTmID = currentTMs.get(i);
                     
-                    if (oldTmID >= 1 && oldTmID <= Gen2Constants.tmBlockOneSize) 
-                    {
+                    if (oldTmID >= 1 && oldTmID <= Gen2Constants.tmBlockOneSize) {
                         oldTmID += Gen2Constants.tmBlockOneIndex - 1;
-                    } 
-                    else if (oldTmID >= Gen2Constants.tmBlockOneSize + 1
-                            && oldTmID <= Gen2Constants.tmBlockOneSize + Gen2Constants.tmBlockTwoSize) 
-                    {
+                    } else if (oldTmID >= Gen2Constants.tmBlockOneSize + 1
+                            && oldTmID <= Gen2Constants.tmBlockOneSize + Gen2Constants.tmBlockTwoSize) {
                         oldTmID += Gen2Constants.tmBlockTwoIndex - 1 - Gen2Constants.tmBlockOneSize;
-                    }
-                    else 
-                    {
+                    } else {
                         oldTmID += Gen2Constants.tmBlockThreeIndex - 1 - Gen2Constants.tmBlockOneSize
                                 - Gen2Constants.tmBlockTwoSize;
                     }
                     
-                    if (newTmID >= 1 && newTmID <= Gen2Constants.tmBlockOneSize) 
-                    {
+                    if (newTmID >= 1 && newTmID <= Gen2Constants.tmBlockOneSize) {
                         newTmID += Gen2Constants.tmBlockOneIndex - 1;
-                    } 
-                    else if (newTmID >= Gen2Constants.tmBlockOneSize + 1
-                            && newTmID <= Gen2Constants.tmBlockOneSize + Gen2Constants.tmBlockTwoSize) 
-                    {
+                    } else if (newTmID >= Gen2Constants.tmBlockOneSize + 1
+                            && newTmID <= Gen2Constants.tmBlockOneSize + Gen2Constants.tmBlockTwoSize) {
                         newTmID += Gen2Constants.tmBlockTwoIndex - 1 - Gen2Constants.tmBlockOneSize;
-                    }
-                    else 
-                    {
+                    } else {
                         newTmID += Gen2Constants.tmBlockThreeIndex - 1 - Gen2Constants.tmBlockOneSize
                                 - Gen2Constants.tmBlockTwoSize;
                     }
@@ -267,28 +239,19 @@ public abstract class AbstractRomHandler implements RomHandler {
                     System.out.println(String.format("%s => %s", itemNames[oldTmID], itemNames[newTmID]));
                     log(String.format("%s => %s", itemNames[oldTmID], itemNames[newTmID]));
                 }
-            }
-            else if( generationOfPokemon() == 5 )
-            {
-                for(int i = 0; i < currentTMs.size(); i++) 
-                {
+            } else if( generationOfPokemon() == 5 ) {
+                for(int i = 0; i < currentTMs.size(); i++) {
                     int oldTmID = oldTMs.get(i);
                     int newTmID = currentTMs.get(i);
-                    if (oldTmID >= 1 && oldTmID <= Gen5Constants.tmBlockOneCount) 
-                    {
+                    if (oldTmID >= 1 && oldTmID <= Gen5Constants.tmBlockOneCount) {
                         oldTmID = oldTmID + (Gen5Constants.tmBlockOneOffset - 1);
-                    } 
-                    else 
-                    {
+                    } else {
                         oldTmID = oldTmID + (Gen5Constants.tmBlockTwoOffset - 1 - Gen5Constants.tmBlockOneCount);
                     }
                     
-                    if (newTmID >= 1 && newTmID <= Gen5Constants.tmBlockOneCount) 
-                    {
+                    if (newTmID >= 1 && newTmID <= Gen5Constants.tmBlockOneCount) {
                         newTmID = newTmID + (Gen5Constants.tmBlockOneOffset - 1);
-                    } 
-                    else 
-                    {
+                    } else {
                         newTmID = newTmID + (Gen5Constants.tmBlockTwoOffset - 1 - Gen5Constants.tmBlockOneCount);
                     }
                     System.out.println(String.format("%s => %s", itemNames[oldTmID], itemNames[newTmID]));
