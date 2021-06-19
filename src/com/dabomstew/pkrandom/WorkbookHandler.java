@@ -1060,9 +1060,9 @@ public class WorkbookHandler {
                     if(tempCellCounter != 0) {
                         tempRow.createCell(tempCellCounter++);
                     }
-                    tempRow.createCell(tempCellCounter++).setCellValue(itemNames[oldTMs.get(i) + tmIndex]);
+                    tempRow.createCell(tempCellCounter++).setCellValue(itemNames[oldTmID]);
                     tempRow.createCell(tempCellCounter++).setCellValue("=>");
-                    tempRow.createCell(tempCellCounter++).setCellValue(itemNames[newTMs.get(i)+ tmIndex]);
+                    tempRow.createCell(tempCellCounter++).setCellValue(itemNames[newTmID]);
                     if(tempCellCounter > cellCounter) {
                         cellCounter = tempCellCounter;
                     }
@@ -1093,9 +1093,9 @@ public class WorkbookHandler {
                     if(tempCellCounter != 0) {
                         tempRow.createCell(tempCellCounter++);
                     }
-                    tempRow.createCell(tempCellCounter++).setCellValue(itemNames[oldTMs.get(i) + tmIndex]);
+                    tempRow.createCell(tempCellCounter++).setCellValue(itemNames[oldTmID]);
                     tempRow.createCell(tempCellCounter++).setCellValue("=>");
-                    tempRow.createCell(tempCellCounter++).setCellValue(itemNames[newTMs.get(i)+ tmIndex]);
+                    tempRow.createCell(tempCellCounter++).setCellValue(itemNames[newTmID]);
                     if(tempCellCounter > cellCounter) {
                         cellCounter = tempCellCounter;
                     }
