@@ -39,6 +39,14 @@ public class Evolution implements Comparable<Evolution> {
         this.extraInfo = extra;
     }
 
+    public Evolution(Evolution evo) {
+        this.from = evo.from;
+        this.to = evo.to;
+        this.carryStats = evo.carryStats;
+        this.type = evo.type;
+        this.extraInfo = evo.extraInfo;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -84,6 +92,12 @@ public class Evolution implements Comparable<Evolution> {
         } else {
             return 0;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "\nfrom = " + from.name + "\n to = " + to.name + "\ncarryStats = " + carryStats
+                + "\ntype = " + type.toString() + "\nextraInfo = " + extraInfo;
     }
 
 }

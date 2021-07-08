@@ -27,6 +27,7 @@ package com.dabomstew.pkrandom;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.dabomstew.pkrandom.pokemon.*;
 import com.dabomstew.pkrandom.romhandlers.Gen1RomHandler;
@@ -57,6 +58,17 @@ public class Randomizer {
         final boolean raceMode = settings.isRaceMode();
 
         int checkValue = 0;
+
+        // Deep copy the evolutions
+        Map<Pokemon, List<Evolution>> originalEvos = new HashMap<>();
+        for (Pokemon pk : romHandler.getPokemon()) {
+            if(pk != null) {
+                List<Evolution> t = pk.evolutionsFrom.stream()
+                        .map(Evolution::new)
+                        .collect(Collectors.toList());
+                originalEvos.put(pk, t);
+            }
+        }
 
         // limit pokemon?
         if (settings.isLimitPokemon()) {
@@ -181,13 +193,6 @@ public class Randomizer {
             if (pkmn != null) {
                 checkValue = addToCV(checkValue, pkmn.hp, pkmn.attack, pkmn.defense, pkmn.speed, pkmn.spatk,
                         pkmn.spdef, pkmn.ability1, pkmn.ability2, pkmn.ability3);
-            }
-        }
-
-        Map<Pokemon, List<Evolution>> originalEvos = new HashMap<Pokemon, List<Evolution>>();
-        for (Pokemon pk : romHandler.getPokemon()) {
-            if(pk != null) {
-                originalEvos.put(pk, new ArrayList<>(pk.evolutionsFrom));
             }
         }
 
