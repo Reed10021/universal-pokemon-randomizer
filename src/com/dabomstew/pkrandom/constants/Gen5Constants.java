@@ -379,10 +379,10 @@ public class Gen5Constants {
         tag(trs, 0xE5, "ELITE4"); // Marshal
 
         // Elite 4 R2
-        tag(trs, 0x233, "ELITE1"); // Shauntal
-        tag(trs, 0x235, "ELITE2"); // Grimsley
-        tag(trs, 0x236, "ELITE3"); // Caitlin
-        tag(trs, 0x234, "ELITE4"); // Marshal
+        tagSpecial(trs, 0x233, "ELITE1"); // Shauntal
+        tagSpecial(trs, 0x235, "ELITE2"); // Grimsley
+        tagSpecial(trs, 0x236, "ELITE3"); // Caitlin
+        tagSpecial(trs, 0x234, "ELITE4"); // Marshal
         tagSpecial(trs, 0x197, "CHAMPION"); // Alder
 
         // Ubers?

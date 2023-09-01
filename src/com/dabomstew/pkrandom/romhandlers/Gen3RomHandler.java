@@ -385,7 +385,14 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
                     romEntry = new RomEntry(re); // clone so we can modify
                     break;
                 }
-            } else if (romCode(rom, re.romCode) && (rom[0xBC] & 0xFF) == re.version) {
+            } else if(romName(rom, Gen3Constants.unofficialEmeraldROMName3)) {
+                if(re.romCode.equals("BPES")) {
+                    havePatchedObedience = true;
+                    romEntry = new RomEntry(re); // clone so we can modify
+                    break;
+                }
+            }
+            else if (romCode(rom, re.romCode) && (rom[0xBC] & 0xFF) == re.version) {
                 romEntry = new RomEntry(re); // clone so we can modify
                 break;
             }
@@ -1430,7 +1437,7 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
             Gen3Constants.trainerTagsRS(theTrainers, romEntry.romType);
         } else if (romEntry.romType == Gen3Constants.RomType_Em) {
             Gen3Constants.trainerTagsE(theTrainers);
-            if(romEntry.romCode.equals("BPER")) {
+            if(romEntry.romCode.equals("BPER") || romEntry.romCode.equals("BPES")) {
                 Gen3Constants.trainerTagsE_Reed(theTrainers);
             }
         } else {

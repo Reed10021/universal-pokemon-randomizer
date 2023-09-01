@@ -18,6 +18,7 @@ public class Gen3Constants {
 
     public static final String unofficialEmeraldROMName = "YJencrypted";
     public static final String unofficialEmeraldROMName2 = "POKEMON EMRR";
+    public static final String unofficialEmeraldROMName3 = "POKEMON EMRS";
 
     public static final int romNameOffset = 0xA0, romCodeOffset = 0xAC, romVersionOffset = 0xBC,
             headerChecksumOffset = 0xBD;
@@ -284,10 +285,10 @@ public class Gen3Constants {
         tag(trs, 0x10F, "GYM7");
         tag(trs, 0x110, "GYM8");
         // Elite 4
-        tag(trs, 0x105, "ELITE1");
-        tag(trs, 0x106, "ELITE2");
-        tag(trs, 0x107, "ELITE3");
-        tag(trs, 0x108, "ELITE4");
+        tagSpecial(trs, 0x105, "ELITE1");
+        tagSpecial(trs, 0x106, "ELITE2");
+        tagSpecial(trs, 0x107, "ELITE3");
+        tagSpecial(trs, 0x108, "ELITE4");
         tagSpecial(trs, 0x14F, "CHAMPION");
         // Brendan
         tag(trs, 0x208, "RIVAL1-2");
@@ -357,11 +358,11 @@ public class Gen3Constants {
         tag(trs, "GYM8", 0x110, 0x31E, 0x31F, 0x320, 0x321);
 
         // Elite 4
-        tag(trs, 0x105, "ELITE1");
-        tag(trs, 0x106, "ELITE2");
-        tag(trs, 0x107, "ELITE3");
-        tag(trs, 0x108, "ELITE4");
-        tag(trs, 0x14F, "CHAMPION");
+        tagSpecial(trs, 0x105, "ELITE1");
+        tagSpecial(trs, 0x106, "ELITE2");
+        tagSpecial(trs, 0x107, "ELITE3");
+        tagSpecial(trs, 0x108, "ELITE4");
+        tagSpecial(trs, 0x14F, "CHAMPION");
 
         // Brendan
         tag(trs, 0x208, "RIVAL1-2");
@@ -380,9 +381,9 @@ public class Gen3Constants {
         tag(trs, 0x20D, "RIVAL4-0");
         tag(trs, 0x210, "RIVAL4-1");
 
-        tag(trs, 0x295, "RIVAL5-2");
-        tag(trs, 0x296, "RIVAL5-0");
-        tag(trs, 0x297, "RIVAL5-1");
+        tagSpecial(trs, 0x295, "RIVAL5-2");
+        tagSpecial(trs, 0x296, "RIVAL5-0");
+        tagSpecial(trs, 0x297, "RIVAL5-1");
 
         // May
         tag(trs, 0x211, "RIVAL1-2");
@@ -401,9 +402,9 @@ public class Gen3Constants {
         tag(trs, 0x216, "RIVAL4-0");
         tag(trs, 0x219, "RIVAL4-1");
 
-        tag(trs, 0x298, "RIVAL5-2");
-        tag(trs, 0x299, "RIVAL5-0");
-        tag(trs, 0x29A, "RIVAL5-1");
+        tagSpecial(trs, 0x298, "RIVAL5-2");
+        tagSpecial(trs, 0x299, "RIVAL5-0");
+        tagSpecial(trs, 0x29A, "RIVAL5-1");
 
         // Themed
         tag(trs, "THEMED:MAXIE", 0x259, 0x25A, 0x2DE);

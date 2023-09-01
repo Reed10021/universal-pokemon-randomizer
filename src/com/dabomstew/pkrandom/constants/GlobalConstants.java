@@ -70,8 +70,8 @@ public class GlobalConstants {
 
     public static final List<Integer> battleTrappingAbilities = Arrays.asList(23, 42, 71);
 
-    public static final List<Integer> negativeAbilities = Arrays.asList(129, 112, 54, 59, 161);
-    // Defeatist, Slow Start, Truant, Forecast, Zen Mode
+    public static final List<Integer> negativeAbilities = Arrays.asList(129, 112, 54, 161);
+    // Defeatist, Slow Start, Truant, Zen Mode
     // To test: Illusion, Imposter
 
     public static final int WONDER_GUARD_INDEX = 25;

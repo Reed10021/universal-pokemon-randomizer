@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class WorkbookHandler {
-    private Workbook workbook;
+    private final Workbook workbook;
 
     public WorkbookHandler() {
         workbook = new XSSFWorkbook();

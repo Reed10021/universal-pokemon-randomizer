@@ -44,6 +44,7 @@ import java.util.Stack;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.dabomstew.pkrandom.CustomNamesSet;
 import com.dabomstew.pkrandom.MiscTweak;
@@ -361,6 +362,7 @@ public abstract class AbstractRomHandler implements RomHandler {
                     evTo.copyRandomizedStatsUpEvolution(evFrom);
                 }
             });
+
         } else {
             List<Pokemon> allPokes = this.getPokemon();
             for (Pokemon pk : allPokes) {
@@ -608,20 +610,21 @@ public abstract class AbstractRomHandler implements RomHandler {
                             && pk.ability2 != GlobalConstants.WONDER_GUARD_INDEX
                             && pk.ability3 != GlobalConstants.WONDER_GUARD_INDEX) {
                         // Pick first ability
-                        pk.ability1 = (pk.number != 493) ?
-                                // If pokemon is not arceus, don't try to use Multitype.
-                                pickRandomAbility(maxAbility, bannedAbilities, 121) :
-                                // If pokemon not arceus, Multitype is fair game.
-                                pickRandomAbility(maxAbility, bannedAbilities);
-
+                        if(pk.number == 493) {
+                            // If pokemon is Arceus, Multitype is first ability.
+                            pk.ability1 = 121 + (pickRandomAbility(maxAbility, bannedAbilities) * 0); //maintain backwards compatability by consuming this rng
+                        } else if(pk.number == 351) {
+                            // If pokemon is Castform, Forecast is first ability.
+                            pk.ability1 = 59 + (pickRandomAbility(maxAbility, bannedAbilities) * 0); //maintain backwards compatability by consuming this rng
+                        } else {
+                            // If pokemon is not Arceus or Castform, don't try to use Multitype or Forecast.
+                            pk.ability1 = pickRandomAbility(maxAbility, bannedAbilities, 121, 59);
+                        }
                         // Second ability?
                         if (isForcingTwoAbilities || AbstractRomHandler.this.random.nextDouble() < 0.5) {
                             // Yes, second ability
-                            pk.ability2 = (pk.number != 493) ?
-                                    // If pokemon is not arceus, don't try to use Multitype.
-                                    pickRandomAbility(maxAbility, bannedAbilities, pk.ability1, 121) :
-                                    // If pokemon not arceus, Multitype is fair game.
-                                    pickRandomAbility(maxAbility, bannedAbilities, pk.ability1);
+                            pk.ability2 = pickRandomAbility(maxAbility, bannedAbilities, pk.ability1, 121, 59);
+                            // Don't try to use Multitype or Forecast.
                         } 
                         else {
                             // Nope
@@ -630,11 +633,8 @@ public abstract class AbstractRomHandler implements RomHandler {
 
                         // Third ability?
                         if (hasDWAbilities) {
-                            pk.ability3 = (pk.number != 493) ?
-                                    // If pokemon is not arceus, don't try to use Multitype.
-                                    pickRandomAbility(maxAbility, bannedAbilities, pk.ability1, pk.ability2, 121) :
-                                    // If pokemon not arceus, Multitype is fair game.
-                                    pickRandomAbility(maxAbility, bannedAbilities, pk.ability1, pk.ability2);
+                            // Don't try to use Multitype or Forecast.
+                            pk.ability3 = pickRandomAbility(maxAbility, bannedAbilities, pk.ability1, pk.ability2, 121, 59);
                         }
                     }
                 }
@@ -661,20 +661,22 @@ public abstract class AbstractRomHandler implements RomHandler {
                         && pk.ability2 != GlobalConstants.WONDER_GUARD_INDEX
                         && pk.ability3 != GlobalConstants.WONDER_GUARD_INDEX) {
                     // Pick first ability
-                    pk.ability1 = (pk.number != 493) ?
-                            // If pokemon is not arceus, don't try to use Multitype.
-                            pickRandomAbility(maxAbility, bannedAbilities, 121) :
-                            // If pokemon is arceus, Multitype is fair game.
-                            pickRandomAbility(maxAbility, bannedAbilities);
+                    if(pk.number == 493) {
+                        // If pokemon is Arceus, Multitype is first ability.
+                        pk.ability1 = 121 + (pickRandomAbility(maxAbility, bannedAbilities) * 0); //maintain backwards compatability by consuming this rng
+                    } else if(pk.number == 351) {
+                        // If pokemon is Castform, Forecast is first ability.
+                        pk.ability1 = 59 + (pickRandomAbility(maxAbility, bannedAbilities) * 0); //maintain backwards compatability by consuming this rng
+                    } else {
+                        // If pokemon is not Arceus or Castform, don't try to use Multitype or Forecast.
+                        pk.ability1 = pickRandomAbility(maxAbility, bannedAbilities, 121, 59);
+                    }
 
                     // Second ability?
                     if (isForcingTwoAbilities || AbstractRomHandler.this.random.nextDouble() < 0.5) {
                         // Yes, second ability
-                        pk.ability2 = (pk.number != 493) ?
-                                // If pokemon is not arceus, don't try to use Multitype.
-                                pickRandomAbility(maxAbility, bannedAbilities, pk.ability1, 121) :
-                                    // If pokemon is arceus, Multitype is fair game.
-                                pickRandomAbility(maxAbility, bannedAbilities, pk.ability1);
+                        pk.ability2 = pickRandomAbility(maxAbility, bannedAbilities, pk.ability1, 121, 59);
+                        // Don't try to use Multitype or Forecast.
                     } else {
                         // Nope
                         pk.ability2 = 0;
@@ -682,11 +684,8 @@ public abstract class AbstractRomHandler implements RomHandler {
 
                     // Third ability?
                     if (hasDWAbilities) {
-                        pk.ability3 = (pk.number != 493) ?
-                                // If pokemon is not arceus, don't try to use Multitype.
-                                pickRandomAbility(maxAbility, bannedAbilities, pk.ability1, pk.ability2, 121) :
-                                // If pokemon is arceus, Multitype is fair game.
-                                pickRandomAbility(maxAbility, bannedAbilities, pk.ability1, pk.ability2);
+                        // Don't try to use Multitype or Forecast.
+                        pk.ability3 = pickRandomAbility(maxAbility, bannedAbilities, pk.ability1, pk.ability2, 121, 59);
                     }
                 }
             }
@@ -1356,7 +1355,7 @@ public abstract class AbstractRomHandler implements RomHandler {
                 for (TrainerPokemon tp : t.pokemon) {
                     boolean wgAllowed = (!noEarlyWonderGuard) || tp.level >= 20;
                     if(t.importantTrainer) {
-                        tp.pokemon = getImportantTrainerPokes(tp, t, usePowerLevels, noLegendaries, wgAllowed);
+                        tp.pokemon = getImportantTrainerPokes(tp, t, usePowerLevels, (group.equals("CHAMPION") ? null : typeForGroup), noLegendaries, wgAllowed, t.pokemon);
                     } else {
                         tp.pokemon = pickReplacement(tp.pokemon, usePowerLevels, typeForGroup, noLegendaries, wgAllowed);
                     }
@@ -1377,6 +1376,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         // Leads to less predictable results for various modifiers.
         // Need to keep the original ordering around for saving though.
         List<Trainer> scrambledTrainers = new ArrayList<Trainer>(currentTrainers);
+
         Collections.shuffle(scrambledTrainers, this.random);
         System.out.println(Arrays.toString(scrambledTrainers.toArray()));
         // Give a type to each unassigned trainer
@@ -1397,7 +1397,7 @@ public abstract class AbstractRomHandler implements RomHandler {
                 for (TrainerPokemon tp : t.pokemon) {
                     boolean shedAllowed = (!noEarlyWonderGuard) || tp.level >= 20;
                     if(t.importantTrainer) {
-                        tp.pokemon = getImportantTrainerPokes(tp, t, usePowerLevels, noLegendaries, shedAllowed);
+                        tp.pokemon = getImportantTrainerPokes(tp, t, usePowerLevels, typeForTrainer, noLegendaries, shedAllowed, t.pokemon);
                     } else {
                         tp.pokemon = pickReplacement(tp.pokemon, usePowerLevels, typeForTrainer, noLegendaries,
                                 shedAllowed);
@@ -4275,19 +4275,26 @@ public abstract class AbstractRomHandler implements RomHandler {
         }
     }
 
-    private Pokemon getImportantTrainerPokes(TrainerPokemon tp, Trainer t, boolean usePowerLevels, boolean noLegendaries, boolean wgAllowed) {
-        Pokemon pokemon = pickReplacement(tp.pokemon, usePowerLevels, null, noLegendaries, wgAllowed);
-        int rerollCount = t.fullDisplayName.equals("Champion Cynthia") ? 20 : 5;
+    private Pokemon getImportantTrainerPokes(TrainerPokemon tp, Trainer t, boolean usePowerLevels, Type type, boolean noLegendaries, boolean wgAllowed, List<TrainerPokemon> alreadyPicked) {
+        List<Pokemon> listOfPokemon = alreadyPicked.stream().map( pick -> pick.pokemon ).collect( Collectors.toList() );
+        List<Pokemon> duplicates = listOfPokemon.stream()
+                .filter(poke -> Collections.frequency(listOfPokemon, poke) > 1)
+                .collect(Collectors.toList());
+        Pokemon pokemon = pickReplacement(tp.pokemon, usePowerLevels, type, noLegendaries, wgAllowed);
+        int rerollCount = t.fullDisplayName.equals("Champion Cynthia") ? 20 : 6;
         for(int i = 0; i < rerollCount; i++) {
-            if (!pokemon.isLegendary() || (rerollCount == 20 && pokemon.number != 445)) {
-                // Reroll a few times if not legendary
-                Pokemon temp = pickReplacement(pokemon, usePowerLevels, null, noLegendaries, wgAllowed);
-                // Save result if it's a legendary, or if it's better than the prior one. Or if it's Garchomp for Cynthia.
-                if(temp.isLegendary() || temp.bstForPowerLevels() > pokemon.bstForPowerLevels() || (rerollCount == 20 && temp.number == 445)) {
+            // Reroll a few times for important trainers
+            Pokemon temp = pickReplacement(pokemon, usePowerLevels, type, noLegendaries, wgAllowed);
+            // Save result if it's better than the prior one, and we don't have two already. Or if it's Garchomp for Cynthia.
+            if (temp.bstForPowerLevels() >= pokemon.bstForPowerLevels() || (rerollCount == 20 && temp.number == 445)) {
+                if(duplicates.contains(temp) || duplicates.contains(pokemon)) { // If we have two already, reroll.
+                    if(duplicates.contains(pokemon)) {
+                        pokemon = pickReplacement(tp.pokemon, usePowerLevels, type, noLegendaries, wgAllowed);
+                    }
+                    i--;
+                } else {
                     pokemon = temp;
                 }
-            } else {
-                break;
             }
         }
         if(pokemon.number == 445) {
