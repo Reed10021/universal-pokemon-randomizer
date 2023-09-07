@@ -34,6 +34,7 @@ public class Gen3Constants {
     public static final String rseMapLabelsPointerPrefix = "C078288030BC01BC00470000";
 
     public static final String pokedexOrderPointerPrefix = "0448814208D0481C0004000C05E00000";
+    public static final String reedEmeraldPokedexOrderPointerPrefix = "4000814208D0481C0004000C05E00000";
 
     public static final String rsFrontSpritesPointerPrefix = "05E0";
 

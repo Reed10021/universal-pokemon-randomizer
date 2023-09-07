@@ -366,7 +366,9 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
         }
         // Pokedex Order header
         if (findMultiple(rom, Gen3Constants.pokedexOrderPointerPrefix).size() != 3) {
-            return false;
+            if( findMultiple(rom, Gen3Constants.reedEmeraldPokedexOrderPointerPrefix).size() != 3) {
+                return false;
+            }
         }
         for (RomEntry re : roms) {
             if (romCode(rom, re.romCode) && (rom[Gen3Constants.romVersionOffset] & 0xFF) == re.version) {
@@ -404,7 +406,12 @@ public class Gen3RomHandler extends AbstractGBRomHandler {
         jamboMovesetHack = false;
 
         // Pokemon count stuff, needs to be available first
-        List<Integer> pokedexOrderPrefixes = findMultiple(rom, Gen3Constants.pokedexOrderPointerPrefix);
+        List<Integer> pokedexOrderPrefixes;
+        if(romEntry.romCode.equals("BPES")) {
+            pokedexOrderPrefixes = findMultiple(rom, Gen3Constants.reedEmeraldPokedexOrderPointerPrefix);
+        } else {
+            pokedexOrderPrefixes = findMultiple(rom, Gen3Constants.pokedexOrderPointerPrefix);
+        }
         romEntry.entries.put("PokedexOrder", readPointer(pokedexOrderPrefixes.get(1) + 16));
 
         // Pokemon names offset
