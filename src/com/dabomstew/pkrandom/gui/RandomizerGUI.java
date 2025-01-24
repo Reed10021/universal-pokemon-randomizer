@@ -185,9 +185,9 @@ public class RandomizerGUI extends javax.swing.JFrame {
         if (!haveCheckedCustomNames) {
             checkCustomNames();
         }
-        if (autoUpdateEnabled) {
-            new UpdateCheckThread(this, false).start();
-        }
+//        if (autoUpdateEnabled) {
+//            new UpdateCheckThread(this, false).start();
+//        }
     }
 
     private void guiCleanup() {
@@ -2345,7 +2345,7 @@ public class RandomizerGUI extends javax.swing.JFrame {
     }// GEN-LAST:event_toggleAutoUpdatesMenuItemActionPerformed
 
     private void manualUpdateMenuItemActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_manualUpdateMenuItemActionPerformed
-        new UpdateCheckThread(this, true).start();
+        //new UpdateCheckThread(this, true).start();
     }// GEN-LAST:event_manualUpdateMenuItemActionPerformed
 
     private void toggleScrollPaneMenuItemActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_toggleScrollPaneMenuItemActionPerformed
