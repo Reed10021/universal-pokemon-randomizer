@@ -237,7 +237,7 @@ public class Gen3Constants {
     }
 
     private static void setupAllowedItems() {
-        allowedItems = new ItemList(376); //376 / 398 in Reed's Emerald
+        allowedItems = new ItemList(398); //376 / 398 in Reed's Emerald
         // Only in Reed's Emerald
         allowedItems.banRange(377, 22);
         // Key items (+1 unknown item)
