@@ -1174,7 +1174,7 @@ public class RandomizerGUI extends javax.swing.JFrame {
                 this.tpMinimumDifficultyCB.setVisible(true);
                 this.tpMinimumDifficultyCB.setEnabled(true);
                 this.tpMinimumDifficultySlider.setVisible(true);
-                this.tpMinimumDifficultySlider.setEnabled(true);
+//                this.tpMinimumDifficultySlider.setEnabled(true);
             } else {
                 this.tpMinimumDifficultyCB.setVisible(false);
                 this.tpMinimumDifficultySlider.setVisible(false);
@@ -1463,6 +1463,13 @@ public class RandomizerGUI extends javax.swing.JFrame {
             this.wpARCatchEmAllRB.setEnabled(false);
             this.wpARTypeThemedRB.setEnabled(false);
             this.wpARNoneRB.setSelected(true);
+        }
+
+        if (this.tpMinimumDifficultyCB.isSelected()) {
+            this.tpMinimumDifficultySlider.setEnabled(true);
+        } else {
+            this.tpMinimumDifficultySlider.setEnabled(false);
+            this.tpMinimumDifficultySlider.setValue(0);
         }
         
         if( this.wpHighLevelModifierCB.isSelected() )
@@ -1832,6 +1839,8 @@ public class RandomizerGUI extends javax.swing.JFrame {
         this.tpForceFullyEvolvedSlider.setValue(settings.getTrainersForceFullyEvolvedLevel());
         this.tpLevelModifierCB.setSelected(settings.isTrainersLevelModified());
         this.tpLevelModifierSlider.setValue(settings.getTrainersLevelModifier());
+
+        this.tpMinimumDifficultyCB.setSelected(settings.isMinimumDifficultyModified());
         this.tpMinimumDifficultySlider.setValue((int)Math.floor((settings.getMinimumDifficulty()*31)/255.0D));
 
         this.wpARCatchEmAllRB
@@ -2000,7 +2009,8 @@ public class RandomizerGUI extends javax.swing.JFrame {
         settings.setTrainersForceFullyEvolvedLevel(tpForceFullyEvolvedSlider.getValue());
         settings.setTrainersLevelModified(tpLevelModifierCB.isSelected());
         settings.setTrainersLevelModifier(tpLevelModifierSlider.getValue());
-        settings.setMinimumDifficulty((int)Math.ceil((tpMinimumDifficultySlider.getValue() * 255)/31.0D));
+        settings.setMinimumDifficultyModified(tpMinimumDifficultyCB.isSelected());
+        settings.setMinimumDifficulty(tpMinimumDifficultySlider.getValue());
 
         settings.setWildPokemonMod(wpUnchangedRB.isSelected(), wpRandomRB.isSelected(), wpArea11RB.isSelected(),
                 wpGlobalRB.isSelected());
@@ -2678,6 +2688,10 @@ public class RandomizerGUI extends javax.swing.JFrame {
     }// GEN-LAST:event_tpForceFullyEvolvedCBActionPerformed
 
     private void tpLevelModifierCBActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_tpForceFullyEvolvedCBActionPerformed
+        this.enableOrDisableSubControls();
+    }
+
+    private void tpMinimumDifficultyCBActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_tpForceFullyEvolvedCBActionPerformed
         this.enableOrDisableSubControls();
     }
     
@@ -4028,6 +4042,11 @@ public class RandomizerGUI extends javax.swing.JFrame {
 
         tpMinimumDifficultyCB.setText(bundle.getString("RandomizerGUI.tpMinimumDifficultyCB.text"));
         tpMinimumDifficultyCB.setToolTipText(bundle.getString("RandomizerGUI.tpMinimumDifficultyCB.toolTipText"));
+        tpMinimumDifficultyCB.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tpMinimumDifficultyCBActionPerformed(evt);
+            }
+        });
 
         tpLevelModifierSlider.setMajorTickSpacing(10);
         tpLevelModifierSlider.setMaximum(50);
@@ -4325,7 +4344,7 @@ public class RandomizerGUI extends javax.swing.JFrame {
             }
         });
 
-        wpLowLevelModifierSlider.setMajorTickSpacing(2);
+        wpLowLevelModifierSlider.setMajorTickSpacing(10);
         wpLowLevelModifierSlider.setMaximum(0);
         wpLowLevelModifierSlider.setMinimum(0);
         wpLowLevelModifierSlider.setMinorTickSpacing(2);
@@ -4333,7 +4352,30 @@ public class RandomizerGUI extends javax.swing.JFrame {
         wpLowLevelModifierSlider.setPaintTicks(true);
         wpLowLevelModifierSlider.setToolTipText(bundle.getString("RandomizerGUI.wpLowLevelModifierSlider.toolTipText")); // NOI18N
         wpLowLevelModifierSlider.setValue(0);
-        
+        wpLowLevelModifierSlider.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent arg0)
+            {
+                wpLowLevelModifierSlider.setMaximum(Math.max(wpHighLevelModifierSlider.getValue()-1,0));
+                if( wpHighLevelModifierSlider.getValue() < 25 )
+                {
+                    wpLowLevelModifierSlider.setMajorTickSpacing(2);
+                    wpLowLevelModifierSlider.setMinorTickSpacing(1);
+                    wpLowLevelModifierSlider.createStandardLabels(2);
+                }
+                else if( wpHighLevelModifierSlider.getValue() < 50 )
+                {
+                    wpLowLevelModifierSlider.setMajorTickSpacing(5);
+                    wpLowLevelModifierSlider.setMinorTickSpacing(1);
+                    wpLowLevelModifierSlider.createStandardLabels(5);
+                }
+                else
+                {
+                    wpLowLevelModifierSlider.setMajorTickSpacing(10);
+                    wpLowLevelModifierSlider.setMinorTickSpacing(2);
+                    wpLowLevelModifierSlider.createStandardLabels(10);
+                }
+            }
+        });
 
         wpUseTimeCB.setText(bundle.getString("RandomizerGUI.wpUseTimeCB.text")); // NOI18N
         wpUseTimeCB.setToolTipText(bundle.getString("RandomizerGUI.wpUseTimeCB.toolTipText")); // NOI18N

@@ -979,7 +979,7 @@ public class Randomizer {
                     if (!first) {
                         log.print(", ");
                     }
-                    log.print(tpk.pokemon.name + " Lv" + tpk.level + "(Iv: " + (int)Math.floor((tpk.difficulty*31)/255.0D) + ")");
+                    log.print(tpk.pokemon.name + " Lv" + tpk.level + "(Ivs: " + (int)Math.floor((tpk.difficulty*31)/255.0D) + ")");
                     first = false;
                 }
                 log.println();

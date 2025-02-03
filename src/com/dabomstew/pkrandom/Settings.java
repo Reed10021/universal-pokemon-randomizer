@@ -46,9 +46,9 @@ import com.dabomstew.pkrandom.romhandlers.RomHandler;
 
 public class Settings {
 
-    public static final int VERSION = 180; //172 //174
+    public static final int VERSION = 181; //181 //172 //174
 
-    public static final int LENGTH_OF_SETTINGS_DATA = 39; //36 @ v172 //38 @ 174
+    public static final int LENGTH_OF_SETTINGS_DATA = 40; //36 @ v172 //38 @ 174 // 39 @ 180
 
     private CustomNamesSet customNames;
 
@@ -147,7 +147,10 @@ public class Settings {
     private int trainersForceFullyEvolvedLevel = 30;
     private boolean trainersLevelModified;
     private int trainersLevelModifier = 0; // -50 ~ 50
-    private int minimumDifficulty = 0; // 0 ~ 255
+    private boolean minimumDifficultyModified;
+    // Internally, the games use 0 ~ 255 in order to convey IVs 0 ~ 31.
+    // To save setting file space, just use the normal 0 ~ 31 values and convert where necessary.
+    private int minimumDifficulty = 0; // 0 ~ 31
 
     public enum WildPokemonMod {
         UNCHANGED, RANDOM, AREA_MAPPING, GLOBAL_MAPPING
@@ -407,6 +410,9 @@ public class Settings {
         // @ 38 Force held item modifiers.
         out.write(makeByteSelected(forceHeldItemMode == 1, forceHeldItemMode == 2));
 
+        // @ 39 Minimum trainer IVs / Minimum trainer difficulty
+        out.write( (minimumDifficultyModified ? 0x80 : 0) | (minimumDifficulty));
+
         try {
             byte[] romName = this.romName.getBytes("US-ASCII");
             out.write(romName.length);
@@ -622,6 +628,9 @@ public class Settings {
         settings.setWildLevelLowModifier((data[37] & 0x7F));
         
         settings.setForceHeldItemMode(restoreState(data[38], 0), restoreState(data[38], 1));
+
+        settings.setMinimumDifficultyModified(restoreState(data[39], 7));
+        settings.setMinimumDifficulty((data[39] & 0x7F));
 
         int romNameLength = data[LENGTH_OF_SETTINGS_DATA] & 0xFF;
         String romName = new String(data, LENGTH_OF_SETTINGS_DATA + 1, romNameLength, "US-ASCII");
@@ -1267,13 +1276,22 @@ public class Settings {
         return this;
     }
 
+    public boolean isMinimumDifficultyModified() {
+        return minimumDifficultyModified;
+    }
+
+    public Settings setMinimumDifficultyModified(boolean minimumDifficultyModified) {
+        this.minimumDifficultyModified = minimumDifficultyModified;
+        return this;
+    }
+
     public Settings setMinimumDifficulty(int minimumDifficulty) {
         this.minimumDifficulty = minimumDifficulty;
         return this;
     }
 
     public int getMinimumDifficulty() {
-        return minimumDifficulty;
+        return (int)Math.ceil((minimumDifficulty * 255)/31.0D);
     }
 
     public WildPokemonMod getWildPokemonMod() {

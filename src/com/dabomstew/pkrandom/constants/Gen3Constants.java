@@ -237,7 +237,9 @@ public class Gen3Constants {
     }
 
     private static void setupAllowedItems() {
-        allowedItems = new ItemList(376);
+        allowedItems = new ItemList(376); //376 / 398 in Reed's Emerald
+        // Only in Reed's Emerald
+        allowedItems.banRange(377, 22);
         // Key items (+1 unknown item)
         allowedItems.banRange(259, 30);
         allowedItems.banRange(349, 28);
@@ -420,18 +422,15 @@ public class Gen3Constants {
     }
 
     public static void trainerTagsE_Reed(List<Trainer> trs) {
-
+        allowedItems.unbanRange(377, 22);
+        nonBadItems.unbanSingles(396, 398); // Serious Mint, Ability Capsule
         tagSpecial(trs, 0x357, "DONT_RANDOMIZE");
-
         tagSpecial(trs, 0x358, "DONT_RANDOMIZE");
-
         tagSpecial(trs, 0x359, "DONT_RANDOMIZE");
-
         tagSpecial(trs, 0x35A, "DONT_RANDOMIZE");
     }
 
     public static void trainerTagsFRLG(List<Trainer> trs) {
-
         // Gym Trainers
         tag(trs, "GYM1", 0x8E);
         tag(trs, "GYM2", 0xEA, 0x96);

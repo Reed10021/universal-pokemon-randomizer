@@ -272,6 +272,11 @@ public class SettingsUpdater {
             }
         }
 
+        // versions < 181: add minimum trainer IV / minimum difficulty
+        if (oldVersion < 181) {
+            insertExtraByte(39, (byte) 0);
+        }
+
         // fix checksum
         CRC32 checksum = new CRC32();
         checksum.update(dataBlock, 0, actualDataLength - 8);

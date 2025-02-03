@@ -6,8 +6,10 @@ public class ItemList {
 
     private boolean[] items;
     private boolean[] tms;
+    private int max = 0;
 
     public ItemList(int highestIndex) {
+        max = highestIndex;
         items = new boolean[highestIndex + 1];
         tms = new boolean[highestIndex + 1];
         for (int i = 1; i <= highestIndex; i++) {
@@ -31,13 +33,33 @@ public class ItemList {
 
     public void banSingles(int... indexes) {
         for (int index : indexes) {
+            if(index > max)
+                continue;
             items[index] = false;
         }
     }
 
     public void banRange(int startIndex, int length) {
+        if(startIndex > max)
+            return;
         for (int i = 0; i < length; i++) {
             items[i + startIndex] = false;
+        }
+    }
+
+    public void unbanSingles(int... indexes) {
+        for (int index : indexes) {
+            if(index > max)
+                continue;
+            items[index] = true;
+        }
+    }
+
+    public void unbanRange(int startIndex, int length) {
+        if(startIndex > max)
+            return;
+        for (int i = 0; i < length; i++) {
+            items[i + startIndex] = true;
         }
     }
 
